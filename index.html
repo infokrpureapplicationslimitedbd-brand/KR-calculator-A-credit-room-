@@ -1,0 +1,2410 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+  <title>KR‌ Calculator A credit room</title>
+
+  <!-- Monetag Ad SDK -->
+  <script src='https://libtl.com/sdk.js' data-zone='10694937' data-sdk='show_10694937'></script>
+
+  <!-- Telegram SDK শুধু টেলিগ্রাম ওয়েবভিউ-তে লোড — বাইরে CloudStorage warning এড়াতে -->
+  <script>
+  (function () {
+    try {
+      var ua = navigator.userAgent || "";
+      var inTg = /Telegram/i.test(ua) || !!(window.TelegramWebviewProxy) || !!(window.Telegram && window.Telegram.WebApp);
+      if (!inTg) return;
+      var s = document.createElement("script");
+      s.src = "https://telegram.org/js/telegram-web-app.js";
+      s.async = true;
+      document.head.appendChild(s);
+    } catch (e) {}
+  })();
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #07070c;
+      --bg-card: #12121a;
+      --bg-card-2: #1a1a24;
+      --border: rgba(255,255,255,0.08);
+      --text: #f5f5f7;
+      --text-muted: #9ca3af;
+      --green: #00e676;
+      --green-dim: rgba(0, 230, 118, 0.15);
+      --orange: #ff9100;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --red: #ff5252;
+      --grad: linear-gradient(135deg, #00e676 0%, #00c853 40%, #ff9100 100%);
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --radius: 18px;
+      --radius-sm: 12px;
+      /* ব্যাটারি/স্ট্যাটাস বার + এক লাইন ফাঁকা */
+      --safe-top: calc(env(safe-area-inset-top, 0px) + 32px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    /* শুরুর কালো স্পেসার — স্ক্রলের সাথে যাবে, স্থির নয় */
+    #status-bar-safe {
+      display: block;
+      width: 100%;
+      height: var(--safe-top);
+      min-height: var(--safe-top);
+      background: #07070c;
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+
+    /* শুধু বিজ্ঞাপনের সময় — ব্যাটারি লাইন ঢেকে রাখে (অ্যাডের উপরে অংশ) */
+    #ad-top-shield {
+      display: none !important;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: calc(env(safe-area-inset-top, 0px) + 52px);
+      background: #07070c;
+      z-index: 99990;
+      pointer-events: none;
+    }
+    #ad-top-shield.on { display: block !important; }
+
+    body {
+      font-family: 'Hind Siliguri', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding-top: 0;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,230,118,0.12), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255,145,0,0.08), transparent);
+    }
+
+    .content-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 58px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 0 24px 0;
+    }
+
+    .header {
+      padding: 10px 12px 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(7,7,12,0.98);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      width: 100%;
+      /* নাম/UID ব্যাটারি লাইনের নিচে */
+      margin-top: 0;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .profile-initial {
+      width: 38px;
+      height: 38px;
+      background: var(--grad);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 700;
+      font-size: 15px;
+      color: #000;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(0,230,118,0.25);
+    }
+    .profile-initial img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .user-info h4 {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+    .user-info h4 i { font-size: 13px; color: var(--blue); flex-shrink: 0; }
+    .user-info span#user-full-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .user-info p {
+      font-size: 13px;
+      color: var(--green);
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .content-section {
+      padding: 10px 12px;
+      display: none;
+      animation: fadeIn 0.35s ease;
+    }
+    .content-section.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-banner {
+      background: var(--grad);
+      border-radius: 14px;
+      padding: 14px 14px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(0,230,118,0.2);
+    }
+    .hero-banner h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0a0a0a;
+      letter-spacing: 0.2px;
+    }
+    .hero-banner p {
+      font-size: 11px;
+      color: rgba(0,0,0,0.65);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 8px;
+      text-align: center;
+    }
+
+    .stat-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 6px;
+      font-size: 13px;
+    }
+    .stat-icon.green { background: var(--green-dim); color: var(--green); }
+    .stat-icon.blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .stat-icon.orange { background: rgba(255,145,0,0.15); color: var(--orange); }
+    .stat-icon.purple { background: rgba(168,85,247,0.15); color: var(--purple); }
+
+    .stat-card span {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .stat-card b {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .card-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+    }
+    .card-box h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-box h3 i { color: var(--green); }
+
+    .input-group { margin-bottom: 14px; }
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .input-group input {
+      width: 100%;
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-group input:focus { border-color: var(--green); }
+
+    .error-text {
+      color: var(--red);
+      font-size: 12px;
+      margin-top: 5px;
+      display: none;
+      font-weight: 600;
+    }
+
+    .selection-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .select-btn {
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .select-btn.active {
+      background: var(--green-dim);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .next-step-btn {
+      width: 100%;
+      background: var(--grad);
+      color: #0a0a0a;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 15px rgba(0,230,118,0.25);
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .next-step-btn:disabled {
+      background: #22222c;
+      color: #555;
+      cursor: not-allowed;
+      box-shadow: none;
+      opacity: 0.7;
+    }
+
+    .fullscreen-confirm-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg);
+      z-index: 99990;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      /* ব্যাটারি লাইনের নিচে */
+      padding-top: var(--safe-top);
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .fullscreen-confirm-overlay.open {
+      transform: translateY(0);
+    }
+
+    .fs-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .fs-header h3 {
+      font-size: 17px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+    }
+    .fs-close-btn {
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .fs-description-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+    .fs-description-box h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .fs-description-box p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .fs-summary-list {
+      background: var(--bg-card-2);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .fs-summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .fs-summary-row:last-child { margin-bottom: 0; }
+    .fs-summary-row span { color: var(--text-muted); }
+    .fs-summary-row b { color: var(--text); }
+
+    .fs-hold-container {
+      margin-top: auto;
+      margin-bottom: 20px;
+      position: relative;
+      width: 100%;
+      user-select: none;
+    }
+
+    .hold-btn {
+      width: 100%;
+      background: var(--grad);
+      color: #0a0a0a;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 18px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 20px rgba(0,230,118,0.3);
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .hold-overlay-ring {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: var(--radius-sm);
+      border: 4px solid #fff;
+      clip-path: inset(0 100% 0 0);
+      transition: clip-path 0.1s linear;
+      z-index: 3;
+      pointer-events: none;
+      box-shadow: 0 0 20px rgba(255,255,255,0.9);
+      display: none;
+    }
+
+    .watch-btn-normal {
+      width: 100%;
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(90deg, #ff0000, #ff7f00, #ffeb3b, #00e676, #00b0ff, #aa00ff, #ff0000);
+      background-size: 300% auto;
+      animation: rainbow-move 4s linear infinite;
+      color: #fff;
+      font-size: 15px;
+      font-family: inherit;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      margin-top: 10px;
+    }
+    @keyframes rainbow-move {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+
+    .history-card-mini {
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .history-card-mini:hover { border-color: var(--green); }
+
+    .gateway-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      padding-top: var(--safe-top);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .gateway-modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .gateway-modal-box {
+      background: #161622;
+      border: 1px solid rgba(255,255,255,0.12);
+      width: 100%;
+      max-width: 340px;
+      border-radius: 18px;
+      padding: 18px 16px;
+      text-align: center;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+    .gateway-modal-overlay.open .gateway-modal-box {
+      transform: scale(1);
+    }
+    .gateway-icon-wrap {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 30px;
+    }
+    .gateway-icon-wrap.success { background: rgba(0, 230, 118, 0.15); color: var(--green); }
+    .gateway-icon-wrap.error { background: rgba(255, 145, 0, 0.15); color: var(--orange); }
+    .gateway-icon-wrap.info { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
+
+    .gateway-modal-box h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .gateway-modal-box p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 20px;
+      white-space: pre-line;
+    }
+    .gateway-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      border: none;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .gateway-btn.primary { background: var(--grad); color: #0a0a0a; box-shadow: 0 4px 15px rgba(0,230,118,0.25); }
+
+    .nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 54px;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgba(7,7,12,0.98);
+      backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      z-index: 9999;
+    }
+    .nav-item {
+      text-align: center;
+      color: #555;
+      font-size: 10px;
+      font-weight: 500;
+      flex: 1;
+      cursor: pointer;
+      padding: 4px 0;
+      position: relative;
+    }
+    .nav-item i {
+      font-size: 16px;
+      display: block;
+      margin-bottom: 1px;
+    }
+    .nav-item.active { color: var(--green); }
+    .nav-item.active i { transform: scale(1.1); }
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 3px;
+      background: var(--green);
+      border-radius: 3px 3px 0 0;
+    }
+
+    .transfer-loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99995;
+      background: rgba(7, 7, 12, 0.92);
+      backdrop-filter: blur(10px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      padding-top: var(--safe-top);
+    }
+    .transfer-loading-overlay.open {
+      display: flex;
+    }
+    .tl-spinner {
+      width: 56px;
+      height: 56px;
+      border: 4px solid rgba(255,255,255,0.12);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: tl-spin 0.8s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes tl-spin {
+      to { transform: rotate(360deg); }
+    }
+    .tl-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .tl-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      text-align: center;
+    }
+    .tl-bar-track {
+      width: 100%;
+      max-width: 280px;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .tl-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--grad);
+      border-radius: 8px;
+      transition: width 0.15s linear;
+    }
+    .tl-percent {
+      margin-top: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--green);
+    }
+
+    .user-desc-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-top: 16px;
+      box-shadow: var(--shadow);
+    }
+    .user-desc-card h3 {
+      font-size: 15px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .user-desc-card h3 i { color: var(--blue); }
+    .user-desc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .user-desc-row:last-child { border-bottom: none; }
+    .user-desc-row span { color: var(--text-muted); flex-shrink: 0; }
+    .user-desc-row b {
+      color: var(--text);
+      font-weight: 600;
+      text-align: right;
+      word-break: break-all;
+    }
+
+    .rules-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-top: 16px;
+      box-shadow: var(--shadow);
+    }
+    .rules-card h3 {
+      font-size: 15px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--orange);
+    }
+    .rule-item {
+      background: var(--bg-card-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+    .rule-item:last-child { margin-bottom: 0; }
+
+    .rule-header-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--orange);
+      background: rgba(255, 145, 0, 0.1);
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .rule-item strong {
+      display: block;
+      color: var(--green);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .rule-item .rule-reward {
+      color: var(--orange);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <!-- শুধু বিজ্ঞাপনের সময় চালু — ব্যাটারি লাইন ঢেকে রাখে -->
+  <div id="ad-top-shield" aria-hidden="true"></div>
+
+  <div class="fullscreen-confirm-overlay" id="fs-confirm-page">
+    <div class="fs-header">
+      <h3><i class="fas fa-shield-alt"></i> ট্রান্সফার কনফার্মেশন</h3>
+      <button class="fs-close-btn" onclick="closeFullscreenConfirm()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="fs-description-box">
+      <h4>লেনদেনের বিবরণী</h4>
+      <p>নিচে আপনার ট্রান্সফারের বিস্তারিত তথ্য দেওয়া হলো। লেনদেন চূড়ান্ত করতে মাঝখানের **KR** লেখা বাটনে আঙুল দিয়ে চেপে ধরে রাখুন। রিং পূর্ণ হওয়া মাত্রই ট্রানজেকশন সফলভাবে সম্পন্ন হয়ে যাবে।</p>
+
+      <div class="fs-summary-list">
+        <div class="fs-summary-row">
+          <span>প্রাপক আইডি:</span>
+          <b id="fs-sum-target">-</b>
+        </div>
+        <div class="fs-summary-row">
+          <span>পরিমাণ:</span>
+          <b id="fs-sum-amount">- ক্রেডিট</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="fs-hold-container">
+      <div id="hold-ring" class="hold-overlay-ring"></div>
+      <button id="transfer-btn" class="hold-btn">
+        কনফার্ম করতে চেপে ধরে রাখুন: <span style="font-size: 16px; color: #0a0a0a; font-weight: 800; background: #fff; padding: 2px 10px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">KR</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="gateway-modal-overlay" id="gateway-modal">
+    <div class="gateway-modal-box">
+      <div id="gateway-icon-wrap" class="gateway-icon-wrap success">
+        <i id="gateway-icon" class="fas fa-check-circle"></i>
+      </div>
+      <h3 id="gateway-title">স্ট্যাটাস শিরোনাম</h3>
+      <p id="gateway-desc">এখানে বিস্তারিত মেসেজ প্রদর্শিত হবে।</p>
+      <button id="gateway-action-btn" class="gateway-btn primary" onclick="closeGatewayModal()">ঠিক আছে</button>
+    </div>
+  </div>
+
+  <div class="transfer-loading-overlay" id="transfer-loading-overlay">
+    <div class="tl-spinner"></div>
+    <div class="tl-title">ক্রেডিট পাঠানো হচ্ছে...</div>
+    <div class="tl-sub">দয়া করে অপেক্ষা করুন। একই সাথে আবার পাঠানো যাবে না।</div>
+    <div class="tl-bar-track"><div class="tl-bar-fill" id="tl-bar-fill"></div></div>
+    <div class="tl-percent" id="tl-percent">0%</div>
+  </div>
+
+  <div class="content-container" id="main-scroll-container">
+    <!-- কালো স্পেসার — স্ক্রলের সাথে যাবে -->
+    <div id="status-bar-safe" aria-hidden="true"></div>
+
+    <div class="header">
+      <div class="header-left">
+        <div class="profile-initial" id="profile-pic">?</div>
+        <div class="user-info">
+          <h4>
+            <span id="user-full-name">লোড হচ্ছে...</span>
+          </h4>
+          <p>ক্রেডিট: <span id="top-balance">0.00</span> টি</p>
+        </div>
+      </div>
+    </div>
+
+     <div id="home" class="content-section active">
+      <div class="hero-banner">
+        <h2>✨ KR Calculator A Credit Room 🎓</h2>
+        <p>🎯 আপনার প্রতিটি ক্রেডিট হলো গাণিতিক সমস্যার ধাপে ধাপে নিখুঁত সমাধান পাওয়ার চাবিকাঠি! 🧠💡</p>
+        <p>⚡ জটিল সব অংক নিমিষেই সমাধান করার ক্ষমতা এবং আপনার শেখার পথকে সহজ করতে এটি কোনো খরচ নয়, বরং আপনার নিজের সফলতার সবচেয়ে বড় বিনিয়োগ। 💪📈</p>
+      </div>
+
+      <div class="user-desc-card">
+        <h3><i class="fas fa-user-circle"></i> ইউজার তথ্য</h3>
+        <div class="user-desc-row">
+          <span>নাম</span>
+          <b id="info-name">লোড হচ্ছে...</b>
+        </div>
+        <div class="user-desc-row">
+          <span>ইউআইডি</span>
+          <b id="info-uid">লোড হচ্ছে...</b>
+        </div>
+        <div class="user-desc-row">
+          <span>ইমেইল</span>
+          <b id="info-email">লোড হচ্ছে...</b>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green"><i class="fas fa-wallet"></i></div>
+          <span>বর্তমান ক্রেডিট</span>
+          <b id="home-balance">0.00 টি</b>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue"><i class="fas fa-exchange-alt"></i></div>
+          <span>মোট লেনদেন</span>
+          <b id="home-ref">0 টি</b>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange"><i class="fas fa-eye"></i></div>
+          <span>বিজ্ঞাপন (৭ দিন)</span>
+          <b id="home-views">0 টি</b>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple"><i class="fas fa-gift"></i></div>
+          <span>বোনাস ক্রেডিট</span>
+          <b id="home-bonus">0.00 টি</b>
+        </div>
+      </div>
+
+      <div class="card-box" style="margin-top: 16px;">
+        <h3><i class="fas fa-play-circle"></i> বিজ্ঞাপন দেখে আয়</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">সম্পূর্ণ বিজ্ঞাপন দেখে আপনার অ্যাকাউন্টে ৩ ক্রেডিট যোগ করুন।</p>
+        <button class="watch-btn-normal" onclick="showAdAndEarn()">
+          বিজ্ঞাপন দেখুন (+৩ ক্রেডিট)
+        </button>
+      </div>
+
+      <div class="rules-card">
+        <h3><i class="fas fa-scroll"></i> বোনাস নিয়মাবলী</h3>
+
+        <div class="rule-item">
+          <div class="rule-header-tag">এককালীন অফার</div>
+          <strong>১. প্রথম লগইন বোনাস</strong>
+          প্রথমবার এই পেজে প্রবেশ করলে এককালীন <span class="rule-reward">৫ ক্রেডিট</span> ফ্রি দেওয়া হবে। পরবর্তী লগইনে আর দেওয়া হবে না।
+        </div>
+
+        <div class="rule-item">
+          <div class="rule-header-tag">পরবর্তী অফার</div>
+          <strong>২. লেনদেন বোনাস</strong>
+          মোট লেনদেনের পরিমাণ <span class="rule-reward">১০০০+</span> হলে এককালীন <span class="rule-reward">৫০ ক্রেডিট</span> বোনাস পাবেন।
+        </div>
+
+        <div class="rule-item">
+          <div class="rule-header-tag">পরবর্তী অফার</div>
+          <strong>৩. বিজ্ঞাপন মাইলস্টোন</strong>
+          মোট বিজ্ঞাপন দেখা <span class="rule-reward">৫৫</span> হলে এককালীন <span class="rule-reward">৬০ ক্রেডিট</span> বোনাস পাবেন।
+        </div>
+
+        <div class="rule-item">
+          <div class="rule-header-tag">পরবর্তী অফার</div>
+          <strong>৪. সাপ্তাহিক বিজ্ঞাপন</strong>
+          টানা ৭ দিন প্রতিদিন ৩টি করে বিজ্ঞাপন দেখলে <span class="rule-reward">১৪ ক্রেডিট</span> বোনাস পাবেন।
+        </div>
+      </div>
+    </div>
+
+    <div id="transfer-page" class="content-section">
+
+      <div class="card-box">
+        <h3><i class="fas fa-exchange-alt"></i> ক্রেডিট ট্রান্সফার করুন</h3>
+        <p id="transfer-instruction-sub" style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">ন্যূনতম ১৫ ক্রেডিট ট্রান্সফার করতে হবে।</p>
+
+        <div class="input-group">
+          <label id="amount-input-label">ক্রেডিট পরিমাণ (ন্যূনতম ১৫)</label>
+          <input type="text" id="transfer-amount" inputmode="numeric" placeholder="পরিমাণ লিখুন" maxlength="5" oninput="validateTransferForm()" onfocus="scrollToInput(this)">
+          <div id="amount-error-msg" class="error-text"></div>
+        </div>
+
+        <div class="input-group">
+          <label>ট্রান্সফারের ধরন নির্বাচন করুন</label>
+          <div class="selection-buttons">
+            <button type="button" id="btn-self" class="select-btn active" onclick="setTransferMode('self')">আমার অ্যাকাউন্টে</button>
+            <button type="button" id="btn-other" class="select-btn" onclick="setTransferMode('other')">বন্ধুকে গিফট পাঠান</button>
+          </div>
+        </div>
+
+        <div class="input-group" id="target-uid-group">
+          <label id="target-uid-label">নিজের ইউআইডি (UID)</label>
+
+          <div id="self-uid-container">
+            <input type="text" id="target-uid-input" placeholder="ইউআইডি" readonly>
+          </div>
+
+          <div id="other-uid-container" style="display: none;">
+            <input type="text" id="other-uid-input" inputmode="numeric" maxlength="11" placeholder="KR-XXXXXXXX" oninput="handleOtherUidInput(this)" onfocus="scrollToInput(this)">
+            <div id="uid-error-msg" class="error-text"></div>
+          </div>
+        </div>
+
+        <button id="next-step-main-btn" class="next-step-btn" onclick="openFullscreenConfirm()" disabled>
+          <i class="fas fa-arrow-right"></i> পরবর্তী ধাপ
+        </button>
+      </div>
+
+      <div class="card-box">
+        <h3><i class="fas fa-history"></i> লেনদেন হিস্টরি</h3>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">লেনদেনের বিস্তারিত তথ্য দেখতে নিচের বাটনে ক্লিক করুন।</p>
+        <div class="history-card-mini" onclick="openHistoryModal()">
+          <span style="font-size: 13px; font-weight: 600;">হিস্টরি মেসেজ দেখুন</span>
+          <i class="fas fa-chevron-right" style="font-size: 12px; color: var(--green);"></i>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <nav class="nav-bar" id="bottom-nav">
+    <div class="nav-item active" onclick="showPage('home', this)">
+      <i class="fas fa-home"></i>Home
+    </div>
+    <div class="nav-item" onclick="showPage('transfer-page', this)">
+      <i class="fas fa-exchange-alt"></i>Transfer
+    </div>
+  </nav>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getDatabase, ref as rtdbRef, onValue, get as rtdbGet, set as rtdbSet } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDUrso1G3orSxiZGTQ1vNYnmN0jdnJ3nSM",
+      authDomain: "kr-calculator-a-bc1e2.firebaseapp.com",
+      databaseURL: "https://kr-calculator-a-bc1e2-default-rtdb.firebaseio.com",
+      projectId: "kr-calculator-a-bc1e2",
+      storageBucket: "kr-calculator-a-bc1e2.firebasestorage.app",
+      messagingSenderId: "916522220428",
+      appId: "1:916522220428:web:b39f14d38c9fe45ecaf4a9",
+      measurementId: "G-K4XGHWM4QF"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let rtdb = null;
+    try { rtdb = getDatabase(app); } catch (e) { console.warn('RTDB init', e); }
+
+    // ক্রেডিট রুম নিজস্ব ব্যালেন্স (বিজ্ঞাপন/বোনাস) — শুধু এই অ্যাপের অভ্যন্তরীণ স্টেট
+    const USERS_COLLECTION = "github";
+    // ক্যালকুলেটর অ্যাপের একই পাথ — এখানেই ক্রেডিট জমা/পাঠানো হবে
+    // KR pro math master / {ver} / Users / {uid} / Credit / app_Credit
+    const PORTAL_COLLECTION = "KR pro math master";
+    const PORTAL_VERSION = "1.1.0.1";
+    // একীভূত অফিশিয়াল প্রোফাইল + ওয়ালেট ইনবক্স (ডিজিটাল ওয়ালেট একই পাথ পড়ে)
+    const OFFICIAL_USERS = "users";
+    const CREDIT_INBOX = "credit";
+    // ক্যালকুলেটর RTDB ক্রেডিট: Credit / {uid}
+    const RTDB_CREDIT_ROOT = "Credit";
+
+    // Telegram — CloudStorage ছুঁই না; স্ক্রিপ্ট না থাকলেও অ্যাপ চলবে
+    let tg = null;
+    let tgUser = null;
+    try {
+      if (window.Telegram && window.Telegram.WebApp) {
+        tg = window.Telegram.WebApp;
+        try { if (typeof tg.ready === "function") tg.ready(); } catch (_) {}
+        try { if (typeof tg.expand === "function") tg.expand(); } catch (_) {}
+        try {
+          if (tg.initDataUnsafe && tg.initDataUnsafe.user) tgUser = tg.initDataUnsafe.user;
+        } catch (_) {}
+      }
+    } catch (_) {
+      tg = null;
+      tgUser = null;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // অ্যাপ থেকে login_uid = আসল অ্যাকাউন্ট UID
+    const linkLoginUid = urlParams.get('login_uid') || urlParams.get('loginUid');
+    const linkUid = urlParams.get('uid') || urlParams.get('id') || urlParams.get('user_id');
+    const linkName = urlParams.get('name');
+    const linkEmail = urlParams.get('email');
+    const linkAvatar = urlParams.get('avatar') || urlParams.get('photo_url');
+    const linkHasAvatar = urlParams.get('has_avatar');
+    const linkAvatarKey = urlParams.get('avatar_key');
+
+    let userId = null;
+    let defaultName = "";
+    let defaultEmail = "";
+    let sourceAvatar = "";
+    let appCreditVal = 0; 
+
+    if (linkLoginUid) {
+      userId = String(linkLoginUid).startsWith("KR-") ? String(linkLoginUid) : ("KR-" + linkLoginUid);
+      defaultName = linkName || "ইউজার";
+      sourceAvatar = linkAvatar || "";
+      defaultEmail = linkEmail || "";
+    } else if (tgUser?.id) {
+      userId = "KR-" + tgUser.id;
+      defaultName = (tgUser?.first_name || "ইউজার") + (tgUser?.last_name ? " " + tgUser.last_name : "");
+      sourceAvatar = tgUser?.photo_url || "";
+      defaultEmail = "";
+    } else if (linkUid) {
+      userId = linkUid.startsWith("KR-") ? linkUid : ("KR-" + linkUid);
+      defaultName = linkName || "ইউজার";
+      sourceAvatar = linkAvatar || "";
+      defaultEmail = linkEmail || "";
+    } else {
+      let visitorId = localStorage.getItem("kr_visitor_id");
+      if (!visitorId) {
+        visitorId = "KR-" + Math.floor(10000000 + Math.random() * 90000000);
+        localStorage.setItem("kr_visitor_id", visitorId);
+      }
+      userId = visitorId;
+    }
+
+    if ((!sourceAvatar || sourceAvatar === "") && linkHasAvatar === "1" && linkAvatarKey) {
+      try {
+        const av = localStorage.getItem(linkAvatarKey);
+        if (av) sourceAvatar = av;
+      } catch (e) {}
+    }
+
+    const userDocRef = doc(db, USERS_COLLECTION, userId);
+    // সরাসরি ক্যালকুলেটরের app_Credit
+    const portalCreditRef = doc(db, PORTAL_COLLECTION, PORTAL_VERSION, "Users", userId, "Credit", "app_Credit");
+    const portalUserRootRef = doc(db, PORTAL_COLLECTION, PORTAL_VERSION, "Users", userId);
+    // অফিশিয়াল ইউজার প্রোফাইল (ওয়ালেট + অন্যান্য অ্যাপ একই ডক পড়ে)
+    const officialUserRef = doc(db, OFFICIAL_USERS, userId);
+    // ওয়ালেটে দেখানোর জন্য প্রাপ্ত ক্রেডিট ইনবক্স — শুধু যা এই ইউআইডিতে পাঠানো হয়
+    const creditInboxRef = doc(db, CREDIT_INBOX, userId);
+
+    let currentUserData = null;
+    let currentTransferMode = "self";
+    let postActionCallback = null;
+    let isTransferring = false;
+
+    let holdTimer = null;
+    let holdStartTime = 0;
+    const holdDuration = 1200;
+
+    const getHiddenHistoryIds = () => {
+      try { return JSON.parse(localStorage.getItem("hidden_history_" + userId) || "[]"); }
+      catch(e) { return []; }
+    };
+
+    window.scrollToInput = function(element) {
+      setTimeout(() => { element.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 350);
+    }
+
+    window.showGatewayModal = function(type, title, desc, callback = null) {
+      const modal = document.getElementById("gateway-modal");
+      const iconWrap = document.getElementById("gateway-icon-wrap");
+      const icon = document.getElementById("gateway-icon");
+      const titleEl = document.getElementById("gateway-title");
+      const descEl = document.getElementById("gateway-desc");
+
+      titleEl.innerText = title;
+      descEl.innerText = desc;
+      postActionCallback = callback;
+
+      iconWrap.className = "gateway-icon-wrap " + type;
+      if (type === "success") {
+        icon.className = "fas fa-check-circle";
+      } else if (type === "error") {
+        icon.className = "fas fa-exclamation-circle";
+      } else {
+        icon.className = "fas fa-info-circle";
+      }
+      modal.classList.add("open");
+    }
+
+    window.closeGatewayModal = function() {
+      document.getElementById("gateway-modal").classList.remove("open");
+      if (typeof postActionCallback === 'function') {
+        let cb = postActionCallback;
+        postActionCallback = null;
+        cb();
+      }
+    }
+
+    window.setTransferMode = function(mode) {
+      currentTransferMode = mode;
+      const btnSelf = document.getElementById("btn-self");
+      const btnOther = document.getElementById("btn-other");
+      const selfContainer = document.getElementById("self-uid-container");
+      const otherContainer = document.getElementById("other-uid-container");
+      const targetLabel = document.getElementById("target-uid-label");
+      const subText = document.getElementById("transfer-instruction-sub");
+      const amountLabel = document.getElementById("amount-input-label");
+
+      if (mode === "self") {
+        btnSelf.classList.add("active");
+        btnOther.classList.remove("active");
+        targetLabel.innerText = "নিজের ইউআইডি (UID)";
+        subText.innerText = "ন্যূনতম ১৫ ক্রেডিট ট্রান্সফার করতে হবে।";
+        amountLabel.innerText = "ক্রেডিট পরিমাণ (ন্যূনতম ১৫)";
+        selfContainer.style.display = "block";
+        otherContainer.style.display = "none";
+        if(userId) document.getElementById("target-uid-input").value = userId;
+      } else {
+        btnOther.classList.add("active");
+        btnSelf.classList.remove("active");
+        targetLabel.innerText = "প্রাপকের ইউআইডি (UID)";
+        subText.innerText = "ন্যূনতম ৩০ ক্রেডিট ট্রান্সফার করতে হবে।";
+        amountLabel.innerText = "ক্রেডিট পরিমাণ (ন্যূনতম ৩০)";
+        selfContainer.style.display = "none";
+        otherContainer.style.display = "block";
+        const otherInput = document.getElementById("other-uid-input");
+        if (!otherInput.value.startsWith("KR-")) {
+          otherInput.value = "KR-";
+        }
+      }
+      validateTransferForm();
+    }
+
+    window.handleOtherUidInput = function(input) {
+      let val = input.value;
+      const errorDiv = document.getElementById("uid-error-msg");
+
+      if (!val.startsWith("KR-")) {
+        input.value = "KR-" + val.replace(/KR-/g, '');
+        val = input.value;
+      }
+
+      const numberPart = val.substring(3).replace(/[^0-9]/g, '').slice(0, 8);
+      input.value = "KR-" + numberPart;
+
+      if (numberPart.startsWith("0")) {
+        errorDiv.innerText = "শূন্য (0) দিয়ে ইউআইডি শুরু করা চলবে না!";
+        errorDiv.style.display = "block";
+      } else {
+        errorDiv.style.display = "none";
+      }
+      validateTransferForm();
+    }
+
+    window.validateTransferForm = function() {
+      const amountInput = document.getElementById("transfer-amount");
+      const amountVal = Number(amountInput.value.trim());
+      const nextBtn = document.getElementById("next-step-main-btn");
+      const amountErrorDiv = document.getElementById("amount-error-msg");
+      const minLimit = (currentTransferMode === "self") ? 15 : 30;
+
+      if (amountInput.value.trim() !== "" && amountVal < minLimit) {
+        amountErrorDiv.innerText = `⚠️ সর্বনিম্ন ${minLimit} ক্রেডিট বা এর বেশি লিখতে হবে!`;
+        amountErrorDiv.style.display = "block";
+      } else {
+        amountErrorDiv.style.display = "none";
+      }
+
+      let isUidValid = true;
+      if (currentTransferMode === "other") {
+        const otherVal = document.getElementById("other-uid-input").value.trim();
+        const numberPart = otherVal.substring(3);
+        if (!otherVal || otherVal === "KR-" || numberPart === "" || numberPart.startsWith("0") || numberPart.length !== 8) {
+          isUidValid = false;
+        }
+      }
+
+      if (!isTransferring && amountInput.value.trim() !== "" && amountVal >= minLimit && isUidValid) {
+        nextBtn.disabled = false;
+      } else {
+        nextBtn.disabled = true;
+      }
+    }
+
+    window.openFullscreenConfirm = async function() {
+      if (isTransferring) {
+        showGatewayModal("info", "অপেক্ষা করুন", "পাঠানো হচ্ছে, কিছুক্ষণ অপেক্ষা করুন। একই সাথে দুইবার ক্রেডিট পাঠানো যাবে না।");
+        return;
+      }
+
+      const amountVal = Number(document.getElementById("transfer-amount").value.trim());
+      const targetUid = currentTransferMode === "self"
+        ? userId
+        : document.getElementById("other-uid-input").value.trim();
+
+      // পুরনো ক্যাশ নয় — Firebase থেকে তাজা মূল ক্রেডিট
+      try { await fetchAppCredit(); } catch (_) {}
+      paintCreditDOM();
+      const totalBalance = Number(appCreditVal) || 0;
+
+      if (amountVal > totalBalance) {
+        showGatewayModal("error", "অপর্যাপ্ত ব্যালেন্স",
+          "দুঃখিত, আপনার মূল ক্রেডিট পর্যাপ্ত নয়!\nবর্তমান মূল ক্রেডিট: " + totalBalance.toFixed(2) + " টি");
+        return;
+      }
+
+      if (currentTransferMode === "other" && (!targetUid || targetUid === "KR-" || targetUid === userId)) {
+        showGatewayModal("error", "অবৈধ আইডি", "সঠিক প্রাপকের ইউআইডি দিন।");
+        return;
+      }
+
+      document.getElementById("fs-sum-target").innerText = targetUid;
+      document.getElementById("fs-sum-amount").innerText = amountVal + " ক্রেডিট";
+      document.getElementById("fs-confirm-page").classList.add("open");
+      setTransferButtonLoading(false);
+      holdRingEl.style.display = "none";
+      holdRingEl.style.clipPath = "inset(0 100% 0 0)";
+    }
+
+    window.closeFullscreenConfirm = function() {
+      document.getElementById("fs-confirm-page").classList.remove("open");
+    }
+
+    const transferBtnEl = document.getElementById("transfer-btn");
+    const holdRingEl = document.getElementById("hold-ring");
+
+    function showTransferLoading(show) {
+      const el = document.getElementById("transfer-loading-overlay");
+      const bar = document.getElementById("tl-bar-fill");
+      const pct = document.getElementById("tl-percent");
+      if (!el) return;
+      if (show) {
+        el.classList.add("open");
+        if (bar) bar.style.width = "0%";
+        if (pct) pct.innerText = "0%";
+      } else {
+        el.classList.remove("open");
+        if (bar) bar.style.width = "0%";
+        if (pct) pct.innerText = "0%";
+      }
+    }
+
+    function setLoadingProgress(p) {
+      const bar = document.getElementById("tl-bar-fill");
+      const pct = document.getElementById("tl-percent");
+      const val = Math.max(0, Math.min(100, Math.round(p)));
+      if (bar) bar.style.width = val + "%";
+      if (pct) pct.innerText = val + "%";
+    }
+
+    function setTransferButtonLoading(loading, msg) {
+      const btn = document.getElementById("transfer-btn");
+      if (!btn) return;
+      if (loading) {
+        btn.disabled = true;
+        btn.style.pointerEvents = "none";
+        btn.style.opacity = "0.85";
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${msg || "পাঠানো হচ্ছে..."}`;
+      } else {
+        btn.disabled = false;
+        btn.style.pointerEvents = "";
+        btn.style.opacity = "";
+        btn.innerHTML = `কনফার্ম করতে চেপে ধরে রাখুন: <span style="font-size: 16px; color: #0a0a0a; font-weight: 800; background: #fff; padding: 2px 10px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">KR</span>`;
+      }
+    }
+
+    function startHold(e) {
+      e.preventDefault();
+      if (isTransferring) {
+        showGatewayModal("info", "অপেক্ষা করুন", "পাঠানো হচ্ছে, কিছুক্ষণ অপেক্ষা করুন। একই সাথে দুইবার ক্রেডিট পাঠানো যাবে না।");
+        return;
+      }
+
+      holdRingEl.style.display = "block";
+      holdRingEl.style.clipPath = "inset(0 100% 0 0)";
+      holdStartTime = Date.now();
+
+      holdTimer = setInterval(() => {
+        if (isTransferring) {
+          stopHold();
+          return;
+        }
+        let elapsed = Date.now() - holdStartTime;
+        let progress = Math.min((elapsed / holdDuration) * 100, 100);
+        let insetVal = 100 - progress;
+        holdRingEl.style.clipPath = `inset(0 ${insetVal}% 0 0)`;
+
+        if (progress >= 100) {
+          stopHold();
+          beginTransferWithLock();
+        }
+      }, 20);
+    }
+
+    function stopHold() {
+      if (holdTimer) {
+        clearInterval(holdTimer);
+        holdTimer = null;
+      }
+      if (!isTransferring) {
+        holdRingEl.style.display = "none";
+        holdRingEl.style.clipPath = "inset(0 100% 0 0)";
+      }
+    }
+
+    async function beginTransferWithLock() {
+      if (isTransferring) {
+        showGatewayModal("info", "অপেক্ষা করুন", "পাঠানো হচ্ছে, কিছুক্ষণ অপেক্ষা করুন।");
+        return;
+      }
+
+      isTransferring = true;
+
+      closeFullscreenConfirm();
+      holdRingEl.style.display = "none";
+      holdRingEl.style.clipPath = "inset(0 100% 0 0)";
+      showTransferLoading(true);
+      setLoadingProgress(8);
+      setTransferButtonLoading(true, "পাঠানো হচ্ছে...");
+
+      let fakeProgress = 8;
+      const progressTimer = setInterval(() => {
+        if (fakeProgress < 92) {
+          fakeProgress += 4;
+          if (fakeProgress > 92) fakeProgress = 92;
+          setLoadingProgress(fakeProgress);
+        }
+      }, 80);
+
+      let result = { ok: false, title: "ট্রান্সফার ব্যর্থ", msg: "দুঃখিত, ট্রান্সফার সম্পন্ন হয়নি!" };
+
+      try {
+        result = await executeTransferAction();
+      } catch (e) {
+        result = { ok: false, title: "ট্রান্সফার ব্যর্থ", msg: e?.message || "দুঃখিত, ট্রান্সফার সম্পন্ন হয়নি!" };
+      }
+
+      clearInterval(progressTimer);
+      setLoadingProgress(100);
+      await new Promise(r => setTimeout(r, 200));
+      showTransferLoading(false);
+
+      document.getElementById("transfer-amount").value = "";
+      document.getElementById("other-uid-input").value = "KR-";
+      const nextBtn = document.getElementById("next-step-main-btn");
+      if (nextBtn) nextBtn.disabled = true;
+
+      isTransferring = false;
+      setTransferButtonLoading(false);
+      validateTransferForm();
+
+      if (result && result.ok) {
+        showGatewayModal("success", result.title || "ট্রান্সফার সফল", result.msg || "ক্রেডিট পাঠানো হয়েছে।");
+      } else {
+        showGatewayModal("error", (result && result.title) || "ট্রান্সফার ব্যর্থ", (result && result.msg) || "দুঃখিত, ট্রান্সফার সম্পন্ন হয়নি!");
+      }
+    }
+
+    transferBtnEl.addEventListener("mousedown", startHold);
+    transferBtnEl.addEventListener("mouseup", stopHold);
+    transferBtnEl.addEventListener("mouseleave", stopHold);
+    transferBtnEl.addEventListener("touchstart", startHold, { passive: false });
+    transferBtnEl.addEventListener("touchend", stopHold);
+    transferBtnEl.addEventListener("touchcancel", stopHold);
+
+    async function executeTransferAction() {
+      const amountVal = Number(document.getElementById("transfer-amount").value.trim());
+      const targetUidFormatted = currentTransferMode === "self"
+        ? userId
+        : document.getElementById("other-uid-input").value.trim();
+      const isSelf = currentTransferMode === "self";
+
+      try {
+        // অ্যাকাউন্ট চেক (গিফট হলে)
+        if (!isSelf) {
+          const portalUserRef = doc(db, PORTAL_COLLECTION, PORTAL_VERSION, "Users", targetUidFormatted);
+          const portalProfileRef = doc(db, PORTAL_COLLECTION, PORTAL_VERSION, "Users", targetUidFormatted, "Profile", "user_Profile");
+          const portalSnap = await getDoc(portalUserRef);
+          const profileSnap = await getDoc(portalProfileRef);
+          if (!portalSnap.exists() && !profileSnap.exists()) {
+            return {
+              ok: false,
+              title: "অ্যাকাউন্ট পাওয়া যায়নি",
+              msg: `ইউআইডি ${targetUidFormatted} দিয়ে KR Calculator A তে কোনো অ্যাকাউন্ট নেই।`
+            };
+          }
+        }
+
+        // Firebase থেকে তাজা মূল ক্রেডিট (পুরনো হিস্ট্রি/ক্যাশ নয়)
+        await fetchAppCredit();
+        const senderMain = Number(appCreditVal) || 0;
+        if (amountVal > senderMain) {
+          return {
+            ok: false,
+            title: "অপর্যাপ্ত ব্যালেন্স",
+            msg: "দুঃখিত, আপনার মূল ক্রেডিট পর্যাপ্ত নয়! বর্তমান: " + senderMain.toFixed(2) + " টি"
+          };
+        }
+
+        const transferId = createDialNumber();
+        const newSenderMain = Number((senderMain - amountVal).toFixed(2));
+
+        // প্রেরকের মূল ক্রেডিট কমাও (portal + main_credit + RTDB) — অন্য জায়গায় নয়
+        await ensurePortalUserRoot();
+        const senderPortalCreditRef = doc(
+          db, PORTAL_COLLECTION, PORTAL_VERSION, "Users", userId, "Credit", "app_Credit"
+        );
+        await setDoc(senderPortalCreditRef, {
+          user_credit: newSenderMain,
+          uid: userId,
+          app: PORTAL_COLLECTION,
+          version: PORTAL_VERSION
+        }, { merge: true });
+        appCreditVal = newSenderMain;
+        try { await writeRtdbCredit(newSenderMain); } catch (_) {}
+        await syncCreditMainBalance(userId, newSenderMain);
+        paintCreditDOM();
+
+        // গিফট হলে প্রাপকের মূল ক্রেডিট বাড়াও
+        if (!isSelf) {
+          const targetPortalCreditRef = doc(
+            db, PORTAL_COLLECTION, PORTAL_VERSION, "Users", targetUidFormatted, "Credit", "app_Credit"
+          );
+          const portalUserRef = doc(db, PORTAL_COLLECTION, PORTAL_VERSION, "Users", targetUidFormatted);
+          const tSnap = await getDoc(targetPortalCreditRef);
+          const tPrev = tSnap.exists() ? (Number(tSnap.data().user_credit) || 0) : 0;
+          const tNext = Number((tPrev + amountVal).toFixed(2));
+          await setDoc(portalUserRef, {
+            uid: targetUidFormatted,
+            app: PORTAL_COLLECTION,
+            version: PORTAL_VERSION
+          }, { merge: true });
+          await setDoc(targetPortalCreditRef, {
+            user_credit: tNext,
+            uid: targetUidFormatted,
+            app: PORTAL_COLLECTION,
+            version: PORTAL_VERSION
+          }, { merge: true });
+          try {
+            if (rtdb) {
+              const tPath = rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + targetUidFormatted);
+              const rs = await rtdbGet(tPath);
+              const prev = rs.exists() ? (rs.val() || {}) : {};
+              await rtdbSet(tPath, {
+                ...prev,
+                user_credit: tNext,
+                uid: targetUidFormatted,
+                app: PORTAL_COLLECTION,
+                version: PORTAL_VERSION,
+                updatedAt: Date.now()
+              });
+            }
+          } catch (_) {}
+          await syncCreditMainBalance(targetUidFormatted, tNext);
+        }
+
+        // হিস্ট্রি তৈরি (শুধু ট্রান্সফার পরিমাণ)
+        const historyObj = {
+          id: transferId,
+          type: isSelf ? "self_transfer" : "other_transfer",
+          target: targetUidFormatted,
+          amount: amountVal,
+          date: Date.now()
+        };
+        try {
+          const senderSnap = await getDoc(userDocRef);
+          const senderData = senderSnap.exists() ? (senderSnap.data() || {}) : {};
+          const existingHistory = Array.isArray(senderData.history) ? senderData.history.slice() : [];
+          existingHistory.push(historyObj);
+          await setDoc(userDocRef, {
+            history: existingHistory,
+            ads: Array.isArray(senderData.ads) ? senderData.ads : [],
+            claimed: senderData.claimed || {},
+            bonusTotal: Number(senderData.bonusTotal) || 0
+          }, { merge: true });
+          currentUserData = {
+            credit: Number(senderData.credit) || 0,
+            history: existingHistory,
+            ads: Array.isArray(senderData.ads) ? senderData.ads : [],
+            claimed: senderData.claimed || {},
+            bonusTotal: Number(senderData.bonusTotal) || 0
+          };
+        } catch (_) {}
+
+        await pushToCreditInbox(
+          targetUidFormatted,
+          amountVal,
+          transferId,
+          isSelf ? "self_transfer" : "other_transfer"
+        );
+
+        await fetchAppCredit();
+        updateUI(currentUserData || { credit: 0, history: [], ads: [], claimed: {}, bonusTotal: 0 });
+        paintCreditDOM();
+
+        return {
+          ok: true,
+          title: "ট্রান্সফার সফল",
+          msg: isSelf
+            ? `${amountVal} ক্রেডিট হিস্ট্রিতে রেকর্ড।\nমূল ক্রেডিট: ${newSenderMain.toFixed(2)} টি\n\n${formatDialMessage(transferId)}`
+            : `${amountVal} ক্রেডিট ${targetUidFormatted} কে পাঠানো হয়েছে।\nআপনার মূল ক্রেডিট: ${newSenderMain.toFixed(2)} টি\n\n${formatDialMessage(transferId)}`
+        };
+
+      } catch (e) {
+        console.error("Transfer Error:", e);
+        return {
+          ok: false,
+          title: "ট্রান্সফার ব্যর্থ",
+          msg: e.message || "দুঃখিত, ট্রান্সফার সম্পন্ন হয়নি!"
+        };
+      }
+    }
+
+    function getAdsLast7Days(ads) {
+      const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      return (Array.isArray(ads) ? ads : []).filter(t => Number(t) >= weekAgo);
+    }
+
+    function sumHistoryAmount(history) {
+      if (!Array.isArray(history)) return 0;
+      return history.reduce((s, h) => s + (Number(h.amount) || 0), 0);
+    }
+
+    async function ensurePortalUserRoot() {
+      try {
+        await setDoc(portalUserRootRef, {
+          uid: userId,
+          app: PORTAL_COLLECTION,
+          version: PORTAL_VERSION
+        }, { merge: true });
+      } catch (e) {}
+    }
+
+    /** অফিশিয়াল users/{uid} প্রোফাইল সিঙ্ক */
+    async function syncOfficialProfile() {
+      try {
+        const payload = {
+          uid: userId,
+          name: defaultName || "ইউজার",
+          displayName: defaultName || "ইউজার",
+          fullName: defaultName || "ইউজার",
+          email: defaultEmail || "",
+          photoURL: (sourceAvatar && sourceAvatar.startsWith("http")) ? sourceAvatar : "",
+          avatar: (sourceAvatar && sourceAvatar.startsWith("http")) ? sourceAvatar : "",
+          source: "credit_room",
+          app: "KR Calculator A",
+          updatedAt: Date.now()
+        };
+        await setDoc(officialUserRef, payload, { merge: true });
+        await writeCreditProfile(userId, payload);
+      } catch (e) {
+        console.error("syncOfficialProfile Error:", e);
+      }
+    }
+
+    /**
+     * credit/{KR-uid} এর নিচে তিনটি সাবকালেকশন/ডকুমেন্ট:
+     *   profile/data      → ইউজার তথ্য
+     *   main_credit/data  → চলমান মূল ক্রেডিট (amount)
+     *   history/my_credit → নিজের ট্রান্সফার এন্ট্রি (প্রতিটি transferId = ফিল্ড)
+     *   history/friend_gift → গিফট এন্ট্রি
+     * রুট ডকে শুধু uid রাখা হয় — ফালতু ম্যাপ নেই।
+     * বিজ্ঞাপন/বোনাস history-তে কখনো লেখা হয় না।
+     */
+    // credit কালেকশন — সব পাথ ও ফিল্ড বাংলায় (ইংরেজি সেভ নয়)
+    /**
+     * ফোন USSD ডায়াল — প্রতিবার আলাদা রূপ (ক্রেডিট কম/বেশি যাই হোক)
+     * উদাহরণ:
+     *   *560*249#
+     *   *560*121*56#
+     *   *560*65*3*25#
+     * শুরু *560* — মাঝে কয়েকটা সংখ্যা-সেগমেন্ট (* দিয়ে) — শেষ #
+     * Firebase-এ পুরো স্ট্রিং (* ও # সহ) "ডায়াল" ফিল্ডে সেভ
+     */
+    function createDialNumber() {
+      function seg() {
+        var len = 1 + Math.floor(Math.random() * 3); // ১–৩ ডিজিট প্রতি সেগমেন্ট
+        var s = String(1 + Math.floor(Math.random() * 9));
+        for (var i = 1; i < len; i++) s += String(Math.floor(Math.random() * 10));
+        return s;
+      }
+      // কখনো ১, কখনো ২, কখনো ৩ সেগমেন্ট
+      var parts = 1 + Math.floor(Math.random() * 3);
+      var mid = seg();
+      for (var p = 1; p < parts; p++) mid += "*" + seg();
+      return "*560*" + mid + "#";
+    }
+    function dialToKey(dial) {
+      var k = String(dial || "").replace(/[^0-9]/g, "");
+      if (!k) {
+        var t = createDialNumber();
+        k = t.replace(/[^0-9]/g, "");
+      }
+      return k;
+    }
+    function formatDialMessage(dial) {
+      return "ফোনে ডায়াল করুন:\n" + dial;
+    }
+
+
+    function creditProfileRef(uid) {
+      return doc(db, CREDIT_INBOX, uid, "প্রোফাইল", "তথ্য");
+    }
+    function creditMainRef(uid) {
+      return doc(db, CREDIT_INBOX, uid, "মূল_ক্রেডিট", "তথ্য");
+    }
+    function creditHistoryMyRef(uid) {
+      return doc(db, CREDIT_INBOX, uid, "হিস্ট্রি", "আমার_ক্রেডিট");
+    }
+    function creditHistoryGiftRef(uid) {
+      return doc(db, CREDIT_INBOX, uid, "হিস্ট্রি", "বন্ধুর_গিফট");
+    }
+    function creditRootRef(uid) {
+      return doc(db, CREDIT_INBOX, uid);
+    }
+
+    async function writeCreditProfile(uid, profilePayload) {
+      try {
+        await setDoc(creditRootRef(uid), { "ইউআইডি": uid }, { merge: true });
+        // প্রোফাইল = শুধু ইউজারের সকল তথ্য (ইন্ডেক্স/লগইন থেকে সিঙ্ক)
+        const p = profilePayload || {};
+        await setDoc(creditProfileRef(uid), {
+          "ইউআইডি": uid,
+          "নাম": p.name || p.displayName || p.fullName || "ইউজার",
+          "ইমেইল": p.email || "",
+          "ছবি": p.photoURL || p.avatar || "",
+          "আপডেট": Date.now()
+        }, { merge: true });
+      } catch (e) {
+        console.error("writeCreditProfile Error:", e);
+      }
+    }
+
+    async function syncCreditMainBalance(uid, creditVal) {
+      if (!uid) return;
+      try {
+        const amount = Number(creditVal) || 0;
+        await setDoc(creditRootRef(uid), { "ইউআইডি": uid }, { merge: true });
+        // মূল_ক্রেডিট = শুধু অ্যাপের চলমান ক্রেডিট (একটি অপশন)
+        await setDoc(creditMainRef(uid), {
+          "ক্রেডিট": amount,
+          "আপডেট": Date.now()
+        }, { merge: true });
+      } catch (e) {
+        console.error("syncCreditMainBalance Error:", e);
+      }
+    }
+
+    /**
+     * ট্রান্সফার হিস্ট্রি — শুধু লেনদেন।
+     * self_transfer → history/my_credit ডকে transferId ফিল্ড
+     * other_transfer → history/friend_gift ডকে transferId ফিল্ড
+     */
+    async function pushToCreditInbox(targetUid, amount, transferId, type) {
+      try {
+        const dial = String(transferId || createDialNumber());
+        const dialKey = dialToKey(dial);
+        await setDoc(creditRootRef(targetUid), { "ইউআইডি": targetUid }, { merge: true });
+
+        let mainAmount = 0;
+        try {
+          const targetPortalRef = doc(db, PORTAL_COLLECTION, PORTAL_VERSION, "Users", targetUid, "Credit", "app_Credit");
+          const pSnap = await getDoc(targetPortalRef);
+          if (pSnap.exists()) {
+            mainAmount = Number(pSnap.data().user_credit) || 0;
+          } else {
+            const mSnap = await getDoc(creditMainRef(targetUid));
+            const md = mSnap.exists() ? (mSnap.data() || {}) : {};
+            const prev = Number(md["ক্রেডিট"] ?? md["পরিমাণ"] ?? md.credit ?? md.amount) || 0;
+            mainAmount = Number((prev + (Number(amount) || 0)).toFixed(2));
+          }
+        } catch (e) {
+          mainAmount = Number(amount) || 0;
+        }
+
+        const entry = {
+          "ডায়াল": dial,
+          "থেকে": userId,
+          "পরিমাণ": Number(amount) || 0,
+          "ক্রেডিট": mainAmount
+        };
+
+        // গিফট → প্রাপকের বন্ধুর_গিফট | সেল্ফ → আমার_ক্রেডিট
+        const histRef = (type === "self_transfer")
+          ? creditHistoryMyRef(targetUid)
+          : creditHistoryGiftRef(targetUid);
+
+        await setDoc(histRef, { [dialKey]: entry }, { merge: true });
+
+        // গিফট হলে প্রেরকের হিস্ট্রিতেও রেকর্ড
+        if (type !== "self_transfer" && targetUid !== userId) {
+          try {
+            const senderGiftRef = creditHistoryGiftRef(userId);
+            const sendEntry = {
+              "ডায়াল": dial,
+              "থেকে": userId,
+              "প্রাপক": targetUid,
+              "পরিমাণ": Number(amount) || 0,
+              "ক্রেডিট": Number(appCreditVal) || 0
+            };
+            await setDoc(creditRootRef(userId), { "ইউআইডি": userId }, { merge: true });
+            await setDoc(senderGiftRef, { [dialKey]: sendEntry }, { merge: true });
+          } catch (eSend) {
+            console.warn("sender gift history", eSend);
+          }
+        }
+
+        await syncCreditMainBalance(targetUid, mainAmount);
+
+        const pRef = creditProfileRef(targetUid);
+        const pExist = await getDoc(pRef);
+        if (!pExist.exists()) {
+          await setDoc(pRef, {
+            "ইউআইডি": targetUid,
+            "নাম": "ইউজার",
+            "ইমেইল": "",
+            "ছবি": "",
+            "আপডেট": Date.now()
+          }, { merge: true });
+        }
+      } catch (e) {
+        console.error("pushToCreditInbox Error:", e);
+        throw e;
+      }
+    }
+
+    async function ensureCreditDocStructure(uid, profilePayload) {
+      try {
+        await writeCreditProfile(uid, profilePayload || {});
+        await setDoc(creditRootRef(uid), { "ইউআইডি": uid }, { merge: true });
+      } catch (e) {
+        console.error("ensureCreditDocStructure Error:", e);
+      }
+    }
+
+
+    async function fetchAppCredit() {
+      try {
+        let vals = [];
+        try {
+          const snap = await getDoc(portalCreditRef);
+          if (snap.exists()) {
+            const v = Number(snap.data().user_credit);
+            if (!isNaN(v)) vals.push(v);
+          }
+        } catch (_) {}
+        try {
+          const mSnap = await getDoc(creditMainRef(userId));
+          if (mSnap.exists()) {
+            const d = mSnap.data() || {};
+            const v = Number(d["ক্রেডিট"] ?? d["পরিমাণ"] ?? d.credit ?? d.amount);
+            if (!isNaN(v)) vals.push(v);
+          }
+        } catch (_) {}
+        try {
+          if (rtdb && userId) {
+            const rs = await rtdbGet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + userId));
+            if (rs.exists()) {
+              const v = Number((rs.val() || {}).user_credit);
+              if (!isNaN(v)) vals.push(v);
+            }
+          }
+        } catch (_) {}
+        // Firebase-এ যে মানগুলো আছে তার মধ্যে সবচেয়ে বড়টা = বর্তমান মূল ক্রেডিট
+        if (vals.length) appCreditVal = Math.max.apply(null, vals);
+      } catch (e) {
+        console.warn("fetchAppCredit", e);
+      }
+    }
+
+
+    /** RTDB-তেও ক্রেডিট লিখো (ক্যালকুলেটর লাইভ দেখে) */
+    async function writeRtdbCredit(nextVal) {
+      if (!rtdb || !userId) return;
+      try {
+        const path = rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + userId);
+        const prevSnap = await rtdbGet(path);
+        const prev = prevSnap.exists() ? (prevSnap.val() || {}) : {};
+        await rtdbSet(path, {
+          ...prev,
+          user_credit: Number(nextVal) || 0,
+          uid: userId,
+          app: PORTAL_COLLECTION,
+          version: PORTAL_VERSION,
+          updatedAt: Date.now()
+        });
+      } catch (e) {
+        console.error("writeRtdbCredit", e);
+      }
+    }
+
+    /** ক্রেডিট রুম থেকে অ্যাপের app_Credit-এ যোগ (বিজ্ঞাপন/বোনাস/সেল্ফ ট্রান্সফার) */
+    async function syncPortalCredit(newCreditVal) {
+      try {
+        await ensurePortalUserRoot();
+        const val = Number(newCreditVal) || 0;
+        await setDoc(portalCreditRef, {
+          user_credit: val,
+          uid: userId,
+          app: PORTAL_COLLECTION,
+          version: PORTAL_VERSION
+        }, { merge: true });
+        appCreditVal = val;
+        await writeRtdbCredit(appCreditVal);
+        // credit/{uid}.main_credit-ও আপডেট (হিস্ট্রি নয়)
+        await syncCreditMainBalance(userId, val);
+      } catch(e) {
+        console.error("Sync Portal Credit Error:", e);
+      }
+    }
+
+    /** অ্যাপের app_Credit-এ নির্দিষ্ট পরিমাণ যোগ (অ্যাড/বোনাস) — হিস্টরি নয় */
+    async function addToAppCredit(amount) {
+      const add = Number(amount) || 0;
+      if (add <= 0) return;
+      try {
+        await ensurePortalUserRoot();
+        let prev = 0;
+        try {
+          const snap = await getDoc(portalCreditRef);
+          if (snap.exists()) prev = Number(snap.data().user_credit) || 0;
+        } catch (_) {}
+        // লাইভ UI মানও হিসাব (লিসেনার আগে আপডেট থাকলে)
+        if (Number(appCreditVal) > prev) prev = Number(appCreditVal);
+        const next = Number((prev + add).toFixed(2));
+        await setDoc(portalCreditRef, {
+          user_credit: next,
+          uid: userId,
+          app: PORTAL_COLLECTION,
+          version: PORTAL_VERSION
+        }, { merge: true });
+        appCreditVal = next;
+        try { await writeRtdbCredit(next); } catch (_) {}
+        try { await syncCreditMainBalance(userId, next); } catch (_) {}
+        paintCreditDOM();
+      } catch (e) {
+        console.error("addToAppCredit Error:", e);
+        throw e;
+      }
+    }
+
+    /** DOM-এ ক্রেডিট সরাসরি লিখো (লাইভ আপডেট নিশ্চিত) */
+    function paintCreditDOM() {
+      try {
+        const appC = Number(appCreditVal) || 0;
+        const topEl = document.getElementById("top-balance");
+        const homeEl = document.getElementById("home-balance");
+        if (topEl) topEl.innerText = appC.toFixed(2);
+        if (homeEl) homeEl.innerText = appC.toFixed(2) + " টি";
+        if (currentUserData) {
+          const totalTx = sumHistoryAmount(
+            (currentUserData.history || []).filter(h => {
+              const t = String(h?.type || "");
+              return t === "self_transfer" || t === "other_transfer" || (!t && h?.target);
+            })
+          );
+          const refEl = document.getElementById("home-ref");
+          if (refEl) refEl.innerText = totalTx + " টি";
+          const ads7 = getAdsLast7Days(currentUserData.ads).length;
+          const viewsEl = document.getElementById("home-views");
+          if (viewsEl) viewsEl.innerText = ads7 + " টি";
+          const bonusEl = document.getElementById("home-bonus");
+          if (bonusEl) bonusEl.innerText = (Number(currentUserData.bonusTotal) || 0).toFixed(2) + " টি";
+        }
+      } catch (e) {}
+    }
+
+    /** Firebase-এ ক্রেডিট বদলালে UI তৎক্ষণাৎ আপডেট */
+    function applyMainCredit(val) {
+      const v = Number(val);
+      if (isNaN(v)) return;
+      // সব সোর্স থেকে আসা মান গ্রহণ — ট্রান্সফারের পর কমে গেলেও আপডেট হবে
+      appCreditVal = v;
+      try {
+        const topEl = document.getElementById("top-balance");
+        const homeEl = document.getElementById("home-balance");
+        if (topEl) topEl.innerText = v.toFixed(2);
+        if (homeEl) homeEl.innerText = v.toFixed(2) + " টি";
+      } catch (_) {}
+      if (currentUserData) {
+        try { updateUI(currentUserData); } catch (_) {}
+      }
+    }
+
+    function startLiveCreditListeners() {
+      if (!userId) return;
+
+      // github/{uid} — হিস্ট্রি/অ্যাডস
+      try {
+        onSnapshot(userDocRef, (snap) => {
+          if (!snap.exists()) return;
+          const data = snap.data() || {};
+          currentUserData = {
+            credit: typeof data.credit === "number" ? data.credit : Number(data.credit) || 0,
+            history: Array.isArray(data.history) ? data.history : [],
+            ads: Array.isArray(data.ads) ? data.ads : [],
+            claimed: data.claimed || {},
+            bonusTotal: Number(data.bonusTotal) || 0
+          };
+          updateUI(currentUserData);
+          paintCreditDOM();
+        }, (err) => console.warn("github live", err));
+      } catch (e) { console.warn(e); }
+
+      // ১) portal app_Credit — মূল সোর্স
+      try {
+        onSnapshot(portalCreditRef, (snap) => {
+          if (!snap.exists()) return;
+          const v = Number(snap.data().user_credit);
+          if (!isNaN(v)) applyMainCredit(v);
+        }, (err) => console.warn("portalCredit live", err));
+      } catch (e) { console.warn(e); }
+
+      // ২) credit/{uid}/main_credit/data — কনসোল থেকে বদলালে এখানে দেখাবে
+      try {
+        onSnapshot(creditMainRef(userId), (snap) => {
+          if (!snap.exists()) return;
+          const d = snap.data() || {};
+          const v = Number(d["ক্রেডিট"] ?? d["পরিমাণ"] ?? d.credit ?? d.amount);
+          if (!isNaN(v)) applyMainCredit(v);
+        }, (err) => console.warn("main_credit live", err));
+      } catch (e) { console.warn(e); }
+
+      // ৩) RTDB Credit/{uid}
+      if (rtdb) {
+        try {
+          onValue(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + userId), (snap) => {
+            if (!snap.exists()) return;
+            const v = Number((snap.val() || {}).user_credit);
+            if (!isNaN(v)) applyMainCredit(v);
+          }, (err) => console.warn("rtdb credit live", err));
+        } catch (e) { console.warn(e); }
+      }
+    }
+
+
+    async function checkMilestoneBonuses(data) {
+      const claimed = data.claimed || {};
+      const adsAll = Array.isArray(data.ads) ? data.ads : [];
+      const totalTx = sumHistoryAmount(data.history);
+      let credit = data.credit || 0;
+      let bonusTotal = data.bonusTotal || 0;
+      let changed = false;
+      let appBonusAdd = 0;
+      const messages = [];
+
+      if (!claimed.tx1000 && totalTx >= 1000) {
+        claimed.tx1000 = true;
+        credit += 50;
+        bonusTotal += 50;
+        appBonusAdd += 50;
+        changed = true;
+        messages.push("🎉 লেনদেন ১০০০+ বোনাস: +৫০ ক্রেডিট যোগ করা হয়েছে।");
+      }
+
+      if (!claimed.ads55 && adsAll.length >= 55) {
+        claimed.ads55 = true;
+        credit += 60;
+        bonusTotal += 60;
+        appBonusAdd += 60;
+        changed = true;
+        messages.push("🚀 বিজ্ঞাপন ৫৫ মাইলস্টোন বোনাস: +৬০ ক্রেডিট যোগ করা হয়েছে।");
+      }
+
+      const daysList = {};
+      adsAll.forEach(t => {
+        const dStr = new Date(Number(t)).toDateString();
+        daysList[dStr] = (daysList[dStr] || 0) + 1;
+      });
+
+      let consecutiveDays = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toDateString();
+        if ((daysList[d] || 0) >= 3) {
+          consecutiveDays++;
+        } else {
+          break;
+        }
+      }
+
+      const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const lastWeekly = Number(claimed.weeklyAdBonusAt) || 0;
+      if (consecutiveDays >= 7 && lastWeekly < weekAgo) {
+        claimed.weeklyAdBonusAt = Date.now();
+        credit += 14;
+        bonusTotal += 14;
+        appBonusAdd += 14;
+        changed = true;
+        messages.push("⭐ সাপ্তাহিক টানা ৭ দিন বিজ্ঞাপন বোনাস: +১৪ ক্রেডিট যোগ করা হয়েছে।");
+      }
+
+      if (changed) {
+        await setDoc(userDocRef, {
+          credit,
+          history: Array.isArray(data.history) ? data.history : [],
+          ads: adsAll,
+          claimed,
+          bonusTotal
+        });
+        data.credit = credit;
+        data.claimed = claimed;
+        data.bonusTotal = bonusTotal;
+        // অ্যাপের app_Credit-এ শুধু নতুন বোনাস যোগ
+        // শুধু ক্রেডিট যোগ — হিস্টরি শুধু ট্রান্সফারে তৈরি হয়
+        if (appBonusAdd > 0) {
+          await addToAppCredit(appBonusAdd);
+        }
+        if (messages.length) {
+          showGatewayModal("success", "বোনাস ক্রেডিট প্রাপ্ত!", messages.join("\n\n"));
+        }
+      }
+      return data;
+    }
+
+    async function initUserData() {
+      try {
+        // নাম/UID সাথে সাথে UI-তে দেখাও (নেটওয়ার্ক ছাড়াই)
+        const name = defaultName || "ইউজার";
+        try {
+          document.getElementById("user-full-name").innerText = name;
+          const picEl = document.getElementById("profile-pic");
+          if (sourceAvatar && sourceAvatar.startsWith("http")) {
+            picEl.innerHTML = `<img src="${sourceAvatar}" alt="Avatar">`;
+          } else {
+            picEl.innerText = name ? name.charAt(0).toUpperCase() : "U";
+          }
+          const infoName = document.getElementById("info-name");
+          const infoUid = document.getElementById("info-uid");
+          const infoEmail = document.getElementById("info-email");
+          if (infoName) infoName.innerText = name;
+          if (infoUid) infoUid.innerText = userId || "—";
+          if (infoEmail) infoEmail.innerText = defaultEmail || "ইউজারের ঠিকানা পাওয়া যায়নি";
+        } catch (_) {}
+
+        // একসাথে পড়া — দ্রুত লোড
+        const reads = [getDoc(userDocRef), getDoc(portalCreditRef)];
+        const [githubSnap, portalSnap] = await Promise.all(reads);
+
+        // মূল ক্রেডিট = Firebase portal (রিসেট নয়)
+        if (portalSnap.exists()) {
+          const v = Number(portalSnap.data().user_credit);
+          if (!isNaN(v)) appCreditVal = v;
+        }
+
+        if (!githubSnap.exists()) {
+          const initial = {
+            credit: 5,
+            history: [],
+            ads: [],
+            claimed: { firstLogin: true },
+            bonusTotal: 5
+          };
+          currentUserData = initial;
+          // নতুন ইউজার — একবার লিখো
+          await Promise.all([
+            setDoc(userDocRef, initial),
+            addToAppCredit(5)
+          ]);
+          showGatewayModal("success", "স্বাগতম!", "🎁 প্রথম লগইন বোনাস হিসেবে ৫ ক্রেডিট যোগ করা হয়েছে।");
+        } else {
+          const data = githubSnap.data() || {};
+          currentUserData = {
+            credit: typeof data.credit === "number" ? data.credit : Number(data.credit) || 0,
+            history: Array.isArray(data.history) ? data.history : [],
+            ads: Array.isArray(data.ads) ? data.ads : [],
+            claimed: data.claimed || {},
+            bonusTotal: Number(data.bonusTotal) || 0
+          };
+          // বিদ্যমান ডেটা আবার লিখে রিসেট করব না
+        }
+
+        // UI সাথে সাথে
+        updateUI(currentUserData);
+
+        // ব্যাকগ্রাউন্ড — UI ব্লক নয়
+        Promise.resolve().then(async () => {
+          try {
+            await syncOfficialProfile();
+          } catch (_) {}
+          try {
+            // main_credit সিঙ্ক শুধু পোর্টাল মান দিয়ে (০ দিয়ে ওভাররাইট নয়)
+            if (appCreditVal > 0 || (portalSnap && portalSnap.exists())) {
+              await syncCreditMainBalance(userId, appCreditVal);
+            }
+          } catch (_) {}
+          try {
+            if (currentUserData) {
+              currentUserData = await checkMilestoneBonuses(currentUserData);
+              updateUI(currentUserData);
+            }
+          } catch (_) {}
+        });
+
+      } catch (err) {
+        console.log(err);
+        if (!currentUserData) {
+          currentUserData = { credit: 0, history: [], ads: [], claimed: {}, bonusTotal: 0 };
+        }
+        updateUI(currentUserData);
+      }
+    }
+
+
+    function updateUI(data) {
+      if (!data) return;
+      const name = defaultName || "ইউজার";
+
+      document.getElementById("user-full-name").innerText = name;
+
+      const picEl = document.getElementById("profile-pic");
+      if (sourceAvatar && sourceAvatar.startsWith("http")) {
+        picEl.innerHTML = `<img src="${sourceAvatar}" alt="Avatar">`;
+      } else {
+        picEl.innerText = name ? name.charAt(0).toUpperCase() : "U";
+      }
+
+      // একটাই মূল ক্রেডিট — হেডার ও বর্তমান দুটোতেই একই মান
+      const mainC = Number(appCreditVal) || 0;
+      document.getElementById("top-balance").innerText = mainC.toFixed(2);
+      document.getElementById("home-balance").innerText = mainC.toFixed(2) + " টি";
+
+      // মোট লেনদেন = শুধু ট্রান্সফার (বিজ্ঞাপন নয়)
+      const onlyTx = (data.history || []).filter(h => {
+        const t = String(h?.type || "");
+        return t === "self_transfer" || t === "other_transfer" || (!t && h?.target);
+      });
+      const totalTx = sumHistoryAmount(onlyTx);
+      document.getElementById("home-ref").innerText = totalTx + " টি";
+
+      const ads7 = getAdsLast7Days(data.ads).length;
+      document.getElementById("home-views").innerText = ads7 + " টি";
+
+      document.getElementById("home-bonus").innerText = (data.bonusTotal || 0).toFixed(2) + " টি";
+
+      const infoName = document.getElementById("info-name");
+      const infoUid = document.getElementById("info-uid");
+      const infoEmail = document.getElementById("info-email");
+      if (infoName) infoName.innerText = name;
+      if (infoUid) infoUid.innerText = userId || "—";
+      if (infoEmail) infoEmail.innerText = defaultEmail ? defaultEmail : "ইউজারের ঠিকানা পাওয়া যায়নি";
+    }
+
+    window.openHistoryModal = function() {
+      const historyList = currentUserData?.history || [];
+      const hiddenIds = getHiddenHistoryIds();
+      // শুধু ট্রান্সফার লেনদেন — বিজ্ঞাপন/বোনাস কখনো হিস্ট্রিতে আসে না
+      const visibleList = historyList.filter(h => {
+        if (!h || hiddenIds.includes(h.id)) return false;
+        const t = String(h.type || "");
+        if (t === "self_transfer" || t === "other_transfer") return true;
+        if (!t && h.target && Number(h.amount) > 0) return true;
+        return false;
+      });
+
+      if (visibleList.length === 0) {
+        showGatewayModal("info", "লেনদেন হিস্টরি", "আপনার কোনো ক্রেডিট ট্রান্সফার নেই।\n(বিজ্ঞাপন দেখে হিস্টরি তৈরি হয় না)");
+        return;
+      }
+
+      const myCredit = visibleList.filter(h => h.type === "self_transfer" || (!h.type && h.target === userId));
+      const friendGift = visibleList.filter(h => h.type === "other_transfer" || (!h.type && h.target && h.target !== userId));
+
+      let messageText = "=== ট্রান্সফার হিস্টরি ===\n\n";
+
+      messageText += "── আমার ক্রেডিট (নিজের অ্যাকাউন্ট) ──\n";
+      if (myCredit.length === 0) {
+        messageText += "কোনো রেকর্ড নেই।\n\n";
+      } else {
+        [...myCredit].reverse().forEach((h, index) => {
+          const dateStr = new Date(h.date).toLocaleString("bn-BD");
+          messageText += `${index + 1}. প্রাপক: ${h.target}\n   পরিমাণ: ${h.amount} ক্রেডিট\n   সময়: ${dateStr}\n\n`;
+        });
+      }
+
+      messageText += "── বন্ধুর গিফট ──\n";
+      if (friendGift.length === 0) {
+        messageText += "কোনো রেকর্ড নেই।\n";
+      } else {
+        [...friendGift].reverse().forEach((h, index) => {
+          const dateStr = new Date(h.date).toLocaleString("bn-BD");
+          messageText += `${index + 1}. প্রাপক: ${h.target}\n   পরিমাণ: ${h.amount} ক্রেডিট\n   সময়: ${dateStr}\n\n`;
+        });
+      }
+
+      showGatewayModal("info", "লেনদেন হিস্টরি", messageText);
+    }
+
+    function setAdTopShield(on) {
+      try {
+        let shield = document.getElementById("ad-top-shield");
+        if (!shield) {
+          shield = document.createElement("div");
+          shield.id = "ad-top-shield";
+          shield.setAttribute("aria-hidden", "true");
+          document.body.appendChild(shield);
+        }
+        if (on) {
+          shield.classList.add("on");
+          shield.style.cssText = "display:block;position:fixed;top:0;left:0;right:0;height:calc(env(safe-area-inset-top, 0px) + 52px);background:#07070c;z-index:2147483647;pointer-events:none;";
+          document.body.appendChild(shield);
+        } else {
+          shield.classList.remove("on");
+          shield.style.display = "none";
+        }
+      } catch (e) {}
+    }
+
+    function clearAdShield() {
+      try {
+        clearInterval(window.__adShieldTimer);
+        window.__adShieldTimer = null;
+      } catch (_) {}
+      try {
+        const shield = document.getElementById("ad-top-shield");
+        if (shield) {
+          shield.classList.remove("on");
+          shield.style.display = "none";
+        }
+        setAdTopShield(false);
+      } catch (_) {}
+    }
+
+    async function grantAdCreditReward() {
+      // মূল ক্রেডিট +৩
+      await addToAppCredit(3);
+      await fetchAppCredit();
+      paintCreditDOM();
+
+      let data = { credit: 0, history: [], ads: [], claimed: {}, bonusTotal: 0 };
+      try {
+        const snap = await getDoc(userDocRef);
+        if (snap.exists()) data = Object.assign(data, snap.data() || {});
+      } catch (_) {}
+
+      const ads = Array.isArray(data.ads) ? data.ads.slice() : [];
+      ads.push(Date.now());
+      const monthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      const cleanedAds = ads.filter(function (t) { return Number(t) >= monthAgo; });
+      const newRoom = (Number(data.credit) || 0) + 3;
+
+      await setDoc(userDocRef, {
+        credit: newRoom,
+        ads: cleanedAds,
+        history: Array.isArray(data.history) ? data.history : [],
+        claimed: data.claimed || {},
+        bonusTotal: Number(data.bonusTotal) || 0
+      }, { merge: true });
+
+      currentUserData = {
+        credit: newRoom,
+        history: Array.isArray(data.history) ? data.history : [],
+        ads: cleanedAds,
+        claimed: data.claimed || {},
+        bonusTotal: Number(data.bonusTotal) || 0
+      };
+      try {
+        currentUserData = await checkMilestoneBonuses(currentUserData);
+      } catch (_) {}
+
+      await fetchAppCredit();
+      updateUI(currentUserData);
+      paintCreditDOM();
+
+      showGatewayModal(
+        "success",
+        "বিজ্ঞাপন বোনাস প্রাপ্ত!",
+        "🎬 +৩ ক্রেডিট যোগ হয়েছে।\nমূল ক্রেডিট: " + (Number(appCreditVal) || 0).toFixed(2) + " টি"
+      );
+    }
+
+    window.showAdAndEarn = async function() {
+      if (window.__adBusy) {
+        showGatewayModal("info", "অপেক্ষা করুন", "বিজ্ঞাপন চলছে, একটু অপেক্ষা করুন।");
+        return;
+      }
+
+      let tries = 0;
+      while (typeof show_10694937 !== "function" && tries < 50) {
+        await new Promise(function (r) { setTimeout(r, 100); });
+        tries++;
+      }
+      if (typeof show_10694937 !== "function") {
+        showGatewayModal("error", "বিজ্ঞাপন ত্রুটি", "বিজ্ঞাপন SDK লোড হয়নি। পেজ রিফ্রেশ করুন।");
+        return;
+      }
+
+      window.__adBusy = true;
+      let rewarded = false;
+
+      setAdTopShield(true);
+      try {
+        clearInterval(window.__adShieldTimer);
+        window.__adShieldTimer = setInterval(function () { setAdTopShield(true); }, 400);
+      } catch (_) {}
+
+      const finishOk = async function () {
+        if (rewarded) return;
+        rewarded = true;
+        clearAdShield();
+        window.__adBusy = false;
+        try {
+          await grantAdCreditReward();
+        } catch (e) {
+          console.error("reward", e);
+          showGatewayModal("error", "ত্রুটি", "ক্রেডিট যোগ হয়নি: " + ((e && e.message) || "অজানা"));
+        }
+      };
+
+      const finishFail = function (msg) {
+        clearAdShield();
+        window.__adBusy = false;
+        if (rewarded) return;
+        // শুধু সত্যিকারের ব্যর্থতায় মেসেজ — ইউজার পুরো দেখলেও SDK কখনো reject করে
+        console.warn("ad fail signal:", msg);
+      };
+
+      try {
+        // Monetag standard
+        var ret = null;
+        try {
+          ret = show_10694937();
+        } catch (e1) {
+          try { ret = show_10694937({}); } catch (e2) { ret = null; }
+        }
+
+        if (ret && typeof ret.then === "function") {
+          ret.then(function () {
+            finishOk();
+          }).catch(function (err) {
+            // অনেক সময় পুরো দেখার পরও reject হয় — রিওয়ার্ড দিয়ে দাও
+            // (মোনেট্যাগ কিছু ভার্সনে close ইভেন্টে reject করে)
+            console.warn("ad promise reject, still granting if possible", err);
+            finishOk();
+          });
+        } else {
+          // promise নাই — ইউজার অ্যাড বন্ধ করলে ধরে নিয়ে রিওয়ার্ড (৫ সেকেন্ড পর)
+          setTimeout(function () {
+            if (!rewarded) finishOk();
+          }, 5000);
+        }
+
+        // সেফটি: ১২০ সেকেন্ড পর শিল্ড সরান
+        setTimeout(function () {
+          clearAdShield();
+          window.__adBusy = false;
+        }, 120000);
+
+      } catch (e) {
+        clearAdShield();
+        window.__adBusy = false;
+        showGatewayModal("error", "বিজ্ঞাপন ত্রুটি", "বিজ্ঞাপন চালু করা যায়নি।");
+      }
+    }
+
+    window.showPage = function(pageId, element) {
+      document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      element.classList.add('active');
+    }
+
+    document.getElementById("other-uid-input").value = "KR-";
+    // সাথে সাথে লিসেনার + UI — দেরি নয়
+    if (typeof setTransferMode === "function") setTransferMode("self");
+    startLiveCreditListeners();
+    initUserData();
+  </script>
+</body>
+</html>
