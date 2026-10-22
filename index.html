@@ -806,44 +806,49 @@
     const linkEmail = urlParams.get('email');
     const linkAvatar = urlParams.get('avatar') || urlParams.get('photo_url');
 
-    // === Avatar from calculator localStorage ===
-    function loadPassedAvatar() {
-      try {
-        const key = urlParams.get('avatar_key') || 'kr_pass_avatar';
-        const has = urlParams.get('has_avatar') === '1';
-        if (has) {
-          const av = localStorage.getItem(key) || localStorage.getItem('kr_pass_avatar');
-          if (av && (av.startsWith('http') || av.startsWith('data:image') || av.startsWith('blob:'))) {
-            sourceAvatar = av;
-          }
-        }
-        if (!sourceAvatar && linkAvatar) sourceAvatar = linkAvatar;
-      } catch (e) {}
-    }
-    loadPassedAvatar();
-
-
     let userId = null;
     let defaultName = "";
     let defaultEmail = "";
     let sourceAvatar = "";
     let appCreditVal = 0;
+    let uiReady = false;
+
+    function pickAvatarFromStorage() {
+      try {
+        const key = urlParams.get('avatar_key') || 'kr_pass_avatar';
+        const candidates = [
+          localStorage.getItem(key),
+          localStorage.getItem('kr_pass_avatar'),
+          sessionStorage.getItem(key),
+          sessionStorage.getItem('kr_pass_avatar'),
+          linkAvatar
+        ];
+        for (const av of candidates) {
+          if (!av) continue;
+          const s = String(av).trim();
+          if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:image') || s.startsWith('blob:')) {
+            return s;
+          }
+        }
+      } catch (e) {}
+      return "";
+    }
 
     if (linkLoginUid) {
       userId = String(linkLoginUid).startsWith("KR-") ? String(linkLoginUid) : ("KR-" + linkLoginUid);
       defaultName = linkName || "ইউজার";
-      sourceAvatar = linkAvatar || "";
       defaultEmail = linkEmail || "";
-    } else if (tgUser?.id) {
+    } else if (tgUser && tgUser.id) {
       userId = "KR-" + tgUser.id;
-      defaultName = (tgUser?.first_name || "ইউজার") + (tgUser?.last_name ? " " + tgUser.last_name : "");
-      sourceAvatar = tgUser?.photo_url || "";
+      defaultName = (tgUser.first_name || "ইউজার") + (tgUser.last_name ? " " + tgUser.last_name : "");
+      sourceAvatar = tgUser.photo_url || "";
     } else if (linkUid) {
       userId = linkUid.startsWith("KR-") ? linkUid : ("KR-" + linkUid);
       defaultName = linkName || "ইউজার";
-      sourceAvatar = linkAvatar || "";
       defaultEmail = linkEmail || "";
     }
+
+    if (!sourceAvatar) sourceAvatar = pickAvatarFromStorage();
 
     const userDocRef = userId ? doc(db, ROOT_COLLECTION, userId) : null;
     const creditProfileRef = userId ? doc(db, ROOT_COLLECTION, userId, "credit", "profile") : null;
@@ -1247,172 +1252,205 @@
 
     function paintCreditDOM() {
       const c = Number(appCreditVal) || 0;
-      document.getElementById("info-credit").innerText = "ক্রেডিট: " + c.toFixed(2);
-      document.getElementById("home-balance").innerText = c.toFixed(2);
+      const creditEl = document.getElementById("info-credit");
+      const balEl = document.getElementById("home-balance");
+      if (creditEl) creditEl.innerText = "ক্রেডিট: " + c.toFixed(2);
+      if (balEl) balEl.innerText = c.toFixed(2);
+    }
+
+    function setText(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.innerText = val;
+    }
+
+    function paintAvatar(name) {
+      const avatarHolder = document.getElementById("avatar-container");
+      if (!avatarHolder) return;
+      const letter = ((name || "U").charAt(0) || "U").toUpperCase();
+      const av = (sourceAvatar || "").trim();
+      if (av && (av.startsWith("http://") || av.startsWith("https://") || av.startsWith("data:image") || av.startsWith("blob:"))) {
+        avatarHolder.innerHTML = '<img src="' + av.replace(/"/g, "&quot;") + '" alt="Avatar" referrerpolicy="no-referrer" onerror="this.onerror=null;this.parentElement.innerHTML=\'<div class=\\\'avatar-fallback\\\'>' + letter + '</div>\';">';
+      } else {
+        avatarHolder.innerHTML = '<div class="avatar-fallback">' + letter + "</div>";
+      }
+    }
+
+    /** তৎক্ষণাৎ স্পিনার বন্ধ — ডেটা না থাকলেও খালি/ডিফল্ট দেখায় */
+    function paintInstantDefaults() {
+      const name = defaultName || "ইউজার";
+      setText("info-name", name);
+      setText("info-email", defaultEmail || "ইমেইল নেই");
+      setText("info-uid", userId || "KR-XXXXXXXX");
+      paintAvatar(name);
+      paintCreditDOM();
+      setText("home-ref", "0");
+      setText("home-views", "0");
+      setText("home-bonus", "0.00");
+      uiReady = true;
+    }
+
+    async function withTimeout(promise, ms) {
+      let t;
+      const timeout = new Promise(function (resolve) {
+        t = setTimeout(function () { resolve({ __timeout: true }); }, ms);
+      });
+      try {
+        const r = await Promise.race([promise, timeout]);
+        clearTimeout(t);
+        return r;
+      } catch (e) {
+        clearTimeout(t);
+        return { __error: e };
+      }
     }
 
     async function updateUIFull() {
+      // প্রথমেই UI ভরা — লোডিং আটকাবে না
+      paintInstantDefaults();
+
       await fetchAppCredit();
       paintCreditDOM();
 
-      if (!creditProfileRef) return;
+      if (!creditProfileRef && !userDocRef) return;
 
       try {
-        const pSnap = await getDoc(creditProfileRef);
+        const tasks = [];
+        if (creditProfileRef) tasks.push(withTimeout(getDoc(creditProfileRef), 3500));
+        else tasks.push(Promise.resolve(null));
+        if (userDocRef) tasks.push(withTimeout(getDoc(userDocRef), 3500));
+        else tasks.push(Promise.resolve(null));
+        if (creditSelfRef) tasks.push(withTimeout(getDoc(creditSelfRef), 3000));
+        else tasks.push(Promise.resolve(null));
+        if (creditFriendRef) tasks.push(withTimeout(getDoc(creditFriendRef), 3000));
+        else tasks.push(Promise.resolve(null));
+
+        const [pSnap, uSnap, selfSnap, friendSnap] = await Promise.all(tasks);
+
         let currentName = defaultName || "ইউজার";
-        let currentEmail = defaultEmail || "ইমেইল পাওয়া যায়নি";
-        
-        if (pSnap.exists()) {
-          const pData = pSnap.data();
-          currentName = pData.name || currentName;
-          currentEmail = pData.email || currentEmail;
-          if (pData.avatar) sourceAvatar = pData.avatar;
+        let currentEmail = defaultEmail || "";
+
+        if (pSnap && !pSnap.__timeout && !pSnap.__error && pSnap.exists && pSnap.exists()) {
+          const pData = pSnap.data() || {};
+          if (pData.name) currentName = pData.name;
+          if (pData.email) currentEmail = pData.email;
+          const pav = (pData.avatar && String(pData.avatar).trim()) || "";
+          if (pav && (pav.startsWith("http") || pav.startsWith("data:image"))) {
+            sourceAvatar = pav;
+          }
         }
 
-        document.getElementById("info-name").innerText = currentName;
-        document.getElementById("info-email").innerText = currentEmail;
-        document.getElementById("info-uid").innerText = userId || "KR-XXXXXXXX";
+        // localStorage/URL avatar অগ্রাধিকার (ক্যালকুলেটর থেকে পাস)
+        const passed = pickAvatarFromStorage();
+        if (passed) sourceAvatar = passed;
 
-        const avatarHolder = document.getElementById("avatar-container");
-        if (sourceAvatar && (sourceAvatar.startsWith("http://") || sourceAvatar.startsWith("https://") || sourceAvatar.startsWith("data:image"))) {
-          avatarHolder.innerHTML = `<img src="${sourceAvatar}" alt="Avatar" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'avatar-fallback\\'>${currentName.charAt(0).toUpperCase()}</div>';">`;
-        } else {
-          avatarHolder.innerHTML = `<div class="avatar-fallback">${currentName.charAt(0).toUpperCase()}</div>`;
+        setText("info-name", currentName);
+        setText("info-email", currentEmail || "ইমেইল নেই");
+        setText("info-uid", userId || "KR-XXXXXXXX");
+        paintAvatar(currentName);
+
+        // বোনাস / বিজ্ঞাপন — না পেলে ০
+        let views = 0;
+        let bonus = 0;
+        if (uSnap && !uSnap.__timeout && !uSnap.__error && uSnap.exists && uSnap.exists()) {
+          const data = uSnap.data() || {};
+          views = Array.isArray(data.ads) ? data.ads.length : (Number(data.adViews) || 0);
+          bonus = Number(data.bonusTotal);
+          if (isNaN(bonus)) bonus = 0;
         }
+        setText("home-views", String(views));
+        setText("home-bonus", bonus.toFixed(2));
 
-        const uSnap = await getDoc(userDocRef);
-        if (uSnap.exists()) {
-          const data = uSnap.data();
-          document.getElementById("home-views").innerText = (Array.isArray(data.ads) ? data.ads.length : 0);
-          document.getElementById("home-bonus").innerText = (Number(data.bonusTotal) || 0).toFixed(2);
-        } else {
-          document.getElementById("home-views").innerText = "0";
-          document.getElementById("home-bonus").innerText = "0.00";
-        }
-      } catch(e){}
-    }
-
-    window.openHistoryModal = async function() {
-      if (!creditSelfRef || !creditFriendRef) return;
-
-      showGatewayModal("info", "হিস্টরি বিবরণী", "হিস্টরি লোড হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...");
-
-      try {
-        const [selfSnap, friendSnap] = await Promise.all([
-          getDoc(creditSelfRef),
-          getDoc(creditFriendRef)
-        ]);
-
-        const selfData = selfSnap.exists() ? selfSnap.data() : {};
-        const friendData = friendSnap.exists() ? friendSnap.data() : {};
-
-        let msg = "=== লেনদেন হিস্টরি ===\n\n[ নিজের ট্রান্সফার ]\n";
-        const selfKeys = Object.keys(selfData);
-        if (selfKeys.length === 0) msg += "কোনো রেকর্ড নেই。\n";
-        selfKeys.forEach((k, idx) => {
-          let item = selfData[k];
-          msg += `${idx + 1}. পরিমাণ: ${item.পরিমাণ} | ডায়াল: ${item.ডায়াল}\n`;
-        });
-
-        msg += "\n[ বন্ধুর গিফট ]\n";
-        const friendKeys = Object.keys(friendData);
-        if (friendKeys.length === 0) msg += "কোনো রেকর্ড নেই。\n";
-        friendKeys.forEach((k, idx) => {
-          let item = friendData[k];
-          msg += `${idx + 1}. প্রাপক/প্রেরক: ${item.প্রাপক || item.প্রেরক} | পরিমাণ: ${item.পরিমাণ} | ডায়াল: ${item.ডায়াল}\n`;
-        });
-
-        showGatewayModal("info", "হিস্টরি বিবরণী", msg);
+        // মোট লেনদেন = self + friend history keys
+        let txCount = 0;
+        try {
+          if (selfSnap && !selfSnap.__timeout && !selfSnap.__error && selfSnap.exists && selfSnap.exists()) {
+            txCount += Object.keys(selfSnap.data() || {}).length;
+          }
+          if (friendSnap && !friendSnap.__timeout && !friendSnap.__error && friendSnap.exists && friendSnap.exists()) {
+            txCount += Object.keys(friendSnap.data() || {}).length;
+          }
+        } catch (e) {}
+        setText("home-ref", String(txCount));
       } catch (e) {
-        showGatewayModal("error", "ত্রুটি", "হিস্টরি লোড করা যায়নি।");
-      }
-    };
-
-    function setAdTopShield(on) {
-      let shield = document.getElementById("ad-top-shield");
-      if (shield) {
-        shield.style.display = on ? "block" : "none";
-        if (on) shield.classList.add("on");
-        else shield.classList.remove("on");
+        // যেকোনো এররেও স্পিনার থেমে থাকে — ডিফল্ট ইতিমধ্যে দেখানো
+        setText("home-views", "0");
+        setText("home-bonus", "0.00");
+        setText("home-ref", "0");
+        paintAvatar(defaultName || "ইউজার");
       }
     }
 
-    window.showAdAndEarn = async function() {
-      if (window.__adBusy) return;
-      let tries = 0;
-      while (typeof show_10694937 !== "function" && tries < 50) {
-        await new Promise(r => setTimeout(r, 100));
-        tries++;
-      }
-      if (typeof show_10694937 !== "function") {
-        showGatewayModal("error", "বিজ্ঞাপন ত্রুটি", "বিজ্ঞাপন SDK লোড হয়নি।");
+    async function initApp() {
+      // তৎক্ষণাৎ UI — Firebase অপেক্ষা ছাড়াই
+      paintInstantDefaults();
+
+      if (!userId) {
+        setText("info-name", "লগইন নেই");
+        setText("info-email", "—");
+        setText("info-uid", "—");
         return;
       }
 
-      window.__adBusy = true;
-      setAdTopShield(true);
-
-      let rewarded = false;
-      const finishOk = async () => {
-        if (rewarded) return;
-        rewarded = true;
-        setAdTopShield(false);
-        window.__adBusy = false;
-        await addToAppCredit(3);
-        showGatewayModal("success", "অভিনন্দন!", "বিজ্ঞাপন দেখে সফলভাবে ৩ ক্রেডিট অর্জন করেছেন।");
-      };
-
-      try {
-        let ret = show_10694937();
-        if (ret && typeof ret.then === "function") {
-          ret.then(finishOk).catch(finishOk);
-        } else {
-          setTimeout(() => { if (!rewarded) finishOk(); }, 5000);
-        }
-      } catch (e) {
-        setAdTopShield(false);
-        window.__adBusy = false;
-        showGatewayModal("error", "বিজ্ঞাপন ত্রুটি", "বিজ্ঞাপন দেখানো যায়নি।");
-      }
-    };
-
-    window.showPage = function(pageId, element) {
-      document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-      document.getElementById(pageId).classList.add('active');
-      element.classList.add('active');
-    };
-
-    async function initApp() {
-      if (!userId) return; // email optional for faster boot
-
       const name = defaultName || "ইউজার";
 
-      try {
-        await setDoc(userDocRef, {
-          uid: userId,
-          name: name,
-          email: defaultEmail,
-          avatar: sourceAvatar || "",
-          updatedAt: Date.now()
-        }, { merge: true });
+      // ব্যাকগ্রাউন্ডে সেভ — UI ব্লক করে না
+      (async function () {
+        try {
+          const profilePayload = {
+            uid: userId,
+            name: name,
+            updatedAt: Date.now()
+          };
+          if (defaultEmail) profilePayload.email = defaultEmail;
+          // খালি অ্যাভাটার দিয়ে আগের লোগো মুছবেন না
+          if (sourceAvatar && String(sourceAvatar).trim()) {
+            profilePayload.avatar = String(sourceAvatar).trim();
+          }
 
-        await setDoc(creditProfileRef, {
-          uid: userId,
-          name: name,
-          email: defaultEmail,
-          avatar: sourceAvatar || "",
-          updatedAt: Date.now()
-        }, { merge: true });
-
-        const mainSnap = await getDoc(creditMainRef);
-        if (!mainSnap.exists()) {
-          await setDoc(creditMainRef, { user_credit: 5, updatedAt: Date.now() }, { merge: true });
-          await writeRtdbCredit(5);
+          const writes = [];
+          if (userDocRef) {
+            const uPayload = Object.assign({}, profilePayload);
+            writes.push(setDoc(userDocRef, uPayload, { merge: true }));
+          }
+          if (creditProfileRef) {
+            writes.push(setDoc(creditProfileRef, profilePayload, { merge: true }));
+          }
+          if (creditMainRef) {
+            writes.push(
+              getDoc(creditMainRef).then(function (mainSnap) {
+                if (!mainSnap.exists()) {
+                  return setDoc(creditMainRef, { user_credit: 5, updatedAt: Date.now() }, { merge: true })
+                    .then(function () { return writeRtdbCredit(5); });
+                }
+              })
+            );
+          }
+          await withTimeout(Promise.all(writes), 4000);
+        } catch (e) {}
+        try {
+          await updateUIFull();
+        } catch (e2) {
+          paintInstantDefaults();
         }
-      } catch (e) {}
+      })();
 
-      await updateUIFull();
+      // সর্বোচ্চ ৫ সেকেন্ডে লোডিং থামাও
+      setTimeout(function () {
+        if (!uiReady) paintInstantDefaults();
+        // স্পিনার বাকি থাকলে জোর করে ক্লিয়ার
+        ["info-name", "info-email", "info-uid", "home-balance", "home-ref", "home-views", "home-bonus"].forEach(function (id) {
+          const el = document.getElementById(id);
+          if (el && el.querySelector && el.querySelector(".mini-spinner")) {
+            if (id === "home-bonus") el.innerText = "0.00";
+            else if (id === "home-ref" || id === "home-views") el.innerText = "0";
+            else if (id === "home-balance") el.innerText = (Number(appCreditVal) || 0).toFixed(2);
+          }
+        });
+        const creditEl = document.getElementById("info-credit");
+        if (creditEl && creditEl.querySelector && creditEl.querySelector(".mini-spinner")) {
+          creditEl.innerText = "ক্রেডিট: " + (Number(appCreditVal) || 0).toFixed(2);
+        }
+      }, 5000);
     }
 
     initApp();
