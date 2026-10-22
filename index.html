@@ -555,7 +555,7 @@
       </div>
 
       <div class="user-desc-card">
-        <h3><i class="fas fa-user-circle"></i> ইউজার তথ্য (প্রোফাইল)</h3>
+        <h3><i class="fas fa-user-circle"></i> ইউজারের প্রোফাইল তথ্য</h3>
         <div class="user-desc-row">
           <span>নাম</span>
           <b id="info-name">লোড হচ্ছে...</b>
@@ -678,8 +678,8 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getDatabase, ref as rtdbRef, onValue, get as rtdbGet, set as rtdbSet } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getDatabase, ref as rtdbRef, get as rtdbGet, set as rtdbSet } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDUrso1G3orSxiZGTQ1vNYnmN0jdnJ3nSM",
@@ -697,7 +697,7 @@
     let rtdb = null;
     try { rtdb = getDatabase(app); } catch (e) { console.warn('RTDB init', e); }
 
-    // নতুন এবং সরাসরি পাথ কাঠামো: KR pro math master -> {userId}
+    // ফায়ারস্টোর প্রধান কালেকশন ও আরটিডিবি রুট
     const ROOT_COLLECTION = "KR pro math master";
     const RTDB_CREDIT_ROOT = "Credit";
 
@@ -757,8 +757,12 @@
       } catch (e) {}
     }
 
-    // ফায়ারবেস সরাসরি ইউজার ডুকমেন্ট পাথ
+    /* 
+      নতুন সরাসরি ফাইল স্ট্রাকচার:
+      KR pro math master / {userId} / credit / {credit_files}
+    */
     const userDocRef = doc(db, ROOT_COLLECTION, userId);
+    const creditProfileRef = doc(db, ROOT_COLLECTION, userId, "credit", "profile");
     const creditMainRef = doc(db, ROOT_COLLECTION, userId, "credit", "main_credit");
     const creditFriendRef = doc(db, ROOT_COLLECTION, userId, "credit", "friend_gift");
     const creditSelfRef = doc(db, ROOT_COLLECTION, userId, "credit", "self_gift");
@@ -973,7 +977,6 @@
       closeFullscreenConfirm();
       showTransferLoading(true);
 
-      // সম্পূর্ণ স্মুথ অ্যানিমেশন (কোনো আটকে যাওয়া ছাড়াই ১০০% এ পৌঁছাবে)
       let currentPercent = 0;
       const smoothInterval = setInterval(() => {
         currentPercent += 2;
@@ -1053,7 +1056,6 @@
       appCreditVal = newSenderMain;
       await writeRtdbCredit(newSenderMain);
 
-      // নিজের হিস্টরি বা বন্ধুর গিফট হিস্টরি সেভ করা
       const historyEntry = {
         "ডায়াল": dial,
         "প্রাপক": targetUid,
@@ -1066,10 +1068,10 @@
       } else {
         await setDoc(creditFriendRef, { [dialKey]: historyEntry }, { merge: true });
 
-        // প্রাপকের অ্যাকাউন্টে যোগ করা
+        // প্রাপকের credit সাব-কালেকশনে ডেটা পাঠানো
         const targetMainRef = doc(db, ROOT_COLLECTION, targetUid, "credit", "main_credit");
         const targetFriendRef = doc(db, ROOT_COLLECTION, targetUid, "credit", "friend_gift");
-        
+
         let targetCurrent = 0;
         try {
           const tMainSnap = await getDoc(targetMainRef);
@@ -1079,7 +1081,8 @@
         const targetNewBalance = Number((targetCurrent + amountVal).toFixed(2));
         await setDoc(targetMainRef, { user_credit: targetNewBalance, updatedAt: Date.now() }, { merge: true });
         await setDoc(targetFriendRef, { [dialKey]: { "ডায়াল": dial, "প্রেরক": userId, "পরিমাণ": amountVal, "তারিখ": Date.now() } }, { merge: true });
-        
+
+        // রিয়েলটাইম ডেটাবেজে সিঙ্ক রাখা (সঠিক রাখা হয়েছে)
         try {
           if (rtdb) {
             await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + targetUid), {
@@ -1138,12 +1141,19 @@
     async function updateUIFull() {
       await fetchAppCredit();
       paintCreditDOM();
-      
+
       try {
-        const snap = await getDoc(userDocRef);
-        if (snap.exists()) {
-          const data = snap.data();
-          currentUserData = data;
+        const pSnap = await getDoc(creditProfileRef);
+        if (pSnap.exists()) {
+          const pData = pSnap.data();
+          document.getElementById("info-name").innerText = pData.name || defaultName;
+          document.getElementById("info-uid").innerText = pData.uid || userId;
+          document.getElementById("info-email").innerText = pData.email || defaultEmail || "সংরক্ষিত নেই";
+        }
+
+        const uSnap = await getDoc(userDocRef);
+        if (uSnap.exists()) {
+          const data = uSnap.data();
           document.getElementById("home-views").innerText = (Array.isArray(data.ads) ? data.ads.length : 0) + " টি";
           document.getElementById("home-bonus").innerText = (Number(data.bonusTotal) || 0).toFixed(2) + " টি";
         }
@@ -1173,7 +1183,7 @@
         if (friendKeys.length === 0) msg += "কোনো রেকর্ড নেই।\n";
         friendKeys.forEach((k, idx) => {
           let item = friendData[k];
-          msg += `${idx + 1}. প্রাপক: ${item.প্রাপক || item.প্রেরক} | পরিমাণ: ${item.পরিমাণ} | ডায়াল: ${item.ডায়াল}\n`;
+          msg += `${idx + 1}. প্রাপক/প্রেরক: ${item.প্রাপক || item.প্রেরক} | পরিমাণ: ${item.পরিমাণ} | ডায়াল: ${item.ডায়াল}\n`;
         });
 
         showGatewayModal("info", "হিস্টরি বিবরণী", msg);
@@ -1237,7 +1247,7 @@
       element.classList.add('active');
     };
 
-    // ইনিশিয়ালাইজেশন ও প্রোফাইল সেভ
+    // অ্যাপ ইনিশিয়ালাইজেশন ও প্রোফাইল সেটআপ
     async function initApp() {
       const name = defaultName || "ইউজার";
       document.getElementById("user-full-name").innerText = name;
@@ -1253,6 +1263,7 @@
       }
 
       try {
+        // ১. সরাসরি ইউজার ডকুমেন্টের ভেতরে প্রোফাইল ফিল্ড
         await setDoc(userDocRef, {
           uid: userId,
           name: name,
@@ -1261,6 +1272,16 @@
           updatedAt: Date.now()
         }, { merge: true });
 
+        // ২. ইউজার ডকুমেন্টের ভেতরে আলাদা `credit/profile` ডকুমেন্ট
+        await setDoc(creditProfileRef, {
+          uid: userId,
+          name: name,
+          email: defaultEmail || "",
+          avatar: sourceAvatar || "",
+          updatedAt: Date.now()
+        }, { merge: true });
+
+        // ৩. ইউজার ডকুমেন্টের ভেতরে আলাদা `credit/main_credit`
         const mainSnap = await getDoc(creditMainRef);
         if (!mainSnap.exists()) {
           await setDoc(creditMainRef, { user_credit: 5, updatedAt: Date.now() }, { merge: true });
