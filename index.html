@@ -563,6 +563,35 @@
     }
     .rule-item strong { display: block; color: var(--green); font-size: 13px; margin-bottom: 4px; }
     .rule-item .rule-reward { color: var(--orange); font-weight: 700; }
+
+    /* ক্রেডিট লোডিং — জিরো ফ্ল্যাশ নয় */
+    .credit-loading-inline {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--text-muted); font-weight: 600;
+    }
+    .credit-load-bar {
+      width: 72px; height: 6px; border-radius: 6px;
+      background: rgba(255,255,255,0.12); overflow: hidden; position: relative;
+    }
+    .credit-load-bar > i {
+      display: block; height: 100%; width: 40%;
+      background: var(--grad); border-radius: 6px;
+      animation: crLoadSlide 1s ease-in-out infinite;
+    }
+    @keyframes crLoadSlide {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(280%); }
+    }
+    .ad-process-overlay {
+      position: fixed; inset: 0; z-index: 99996;
+      background: rgba(7,7,12,0.92); backdrop-filter: blur(10px);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px; text-align: center;
+    }
+    .ad-process-overlay.open { display: flex; }
+    .ad-process-overlay .tl-spinner { margin-bottom: 16px; }
+    .ad-process-overlay .tl-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .ad-process-overlay .tl-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
   </style>
 </head>
 <body oncontextmenu="return false;">
@@ -621,6 +650,14 @@
     <div class="tl-sub">দয়া করে অপেক্ষা করুন। ট্রানজেকশন প্রসেসিং চলছে।</div>
     <div class="tl-bar-track"><div class="tl-bar-fill" id="tl-bar-fill"></div></div>
     <div class="tl-percent" id="tl-percent">0%</div>
+  </div>
+
+  <div class="ad-process-overlay" id="ad-process-overlay">
+    <div class="tl-spinner"></div>
+    <div class="tl-title" id="ad-process-title">বিজ্ঞাপন চলছে...</div>
+    <div class="tl-sub" id="ad-process-sub">সম্পূর্ণ দেখুন — শেষ হলে ক্রেডিট যোগ হবে।</div>
+    <div class="tl-bar-track"><div class="tl-bar-fill" id="ad-bar-fill" style="width:15%"></div></div>
+    <div class="tl-percent" id="ad-percent">…</div>
   </div>
 
   <div class="content-container" id="main-scroll-container">
@@ -1219,7 +1256,11 @@
     }
 
     async function fetchAppCredit() {
-      if (!creditMainRef) return;
+      if (!creditMainRef) {
+        window._creditFetchDone = true;
+        creditLoadedOnce = true;
+        return;
+      }
       try {
         const snap = await getDoc(creditMainRef);
         if (snap.exists()) {
@@ -1227,6 +1268,8 @@
           if (!isNaN(v)) appCreditVal = v;
         }
       } catch (e) {}
+      window._creditFetchDone = true;
+      creditLoadedOnce = true;
     }
 
     async function writeRtdbCredit(val) {
@@ -1250,12 +1293,52 @@
       paintCreditDOM();
     }
 
+    let creditLoadedOnce = false;
+
+    function creditLoadingHtml(label) {
+      return '<span class="credit-loading-inline">' +
+        (label ? label + ' ' : '') +
+        '<span class="credit-load-bar"><i></i></span></span>';
+    }
+
+    function showCreditLoading() {
+      try {
+        const creditEl = document.getElementById("info-credit");
+        const balEl = document.getElementById("home-balance");
+        if (creditEl) creditEl.innerHTML = "ক্রেডিট: " + creditLoadingHtml("");
+        if (balEl) balEl.innerHTML = creditLoadingHtml("");
+      } catch (e) {}
+    }
+
     function paintCreditDOM() {
       const c = Number(appCreditVal) || 0;
       const creditEl = document.getElementById("info-credit");
       const balEl = document.getElementById("home-balance");
+      // লোড না হওয়া পর্যন্ত জিরো দেখাবে না — লোডিং বার
+      if (!creditLoadedOnce && !window._creditFetchDone) {
+        showCreditLoading();
+        return;
+      }
       if (creditEl) creditEl.innerText = "ক্রেডিট: " + c.toFixed(2);
       if (balEl) balEl.innerText = c.toFixed(2);
+    }
+
+    function setAdProcess(open, title, sub, pct) {
+      try {
+        const el = document.getElementById("ad-process-overlay");
+        if (!el) return;
+        if (open) el.classList.add("open");
+        else el.classList.remove("open");
+        const t = document.getElementById("ad-process-title");
+        const s = document.getElementById("ad-process-sub");
+        const bar = document.getElementById("ad-bar-fill");
+        const p = document.getElementById("ad-percent");
+        if (t && title) t.innerText = title;
+        if (s && sub) s.innerText = sub;
+        if (bar && pct != null) bar.style.width = Math.max(5, Math.min(100, pct)) + "%";
+        if (p && pct != null) p.innerText = Math.round(pct) + "%";
+        else if (p && open) p.innerText = "…";
+      } catch (e) {}
     }
 
     function setText(id, val) {
@@ -1275,14 +1358,16 @@
       }
     }
 
-    /** তৎক্ষণাৎ স্পিনার বন্ধ — ডেটা না থাকলেও খালি/ডিফল্ট দেখায় */
+    /** তৎক্ষণাৎ নাম/ইমেইল — ক্রেডিট লোডিং বার (জিরো নয়) */
     function paintInstantDefaults() {
       const name = defaultName || "ইউজার";
       setText("info-name", name);
       setText("info-email", defaultEmail || "ইমেইল নেই");
       setText("info-uid", userId || "KR-XXXXXXXX");
       paintAvatar(name);
-      paintCreditDOM();
+      // ক্রেডিট: লোড শেষ না হওয়া পর্যন্ত লোডিং বার
+      if (window._creditFetchDone || creditLoadedOnce) paintCreditDOM();
+      else showCreditLoading();
       setText("home-ref", "0");
       setText("home-views", "0");
       setText("home-bonus", "0.00");
@@ -1451,19 +1536,17 @@
       // সর্বোচ্চ ৫ সেকেন্ডে লোডিং থামাও
       setTimeout(function () {
         if (!uiReady) paintInstantDefaults();
-        // স্পিনার বাকি থাকলে জোর করে ক্লিয়ার
-        ["info-name", "info-email", "info-uid", "home-balance", "home-ref", "home-views", "home-bonus"].forEach(function (id) {
+        window._creditFetchDone = true;
+        creditLoadedOnce = true;
+        // স্পিনার/লোডিং বার থাকলে আসল মান (লোড শেষ ধরে) — জিরো জোর করে নয় যদি ইতিমধ্যে মান আছে
+        try { paintCreditDOM(); } catch (e) {}
+        ["info-name", "info-email", "info-uid", "home-ref", "home-views", "home-bonus"].forEach(function (id) {
           const el = document.getElementById(id);
-          if (el && el.querySelector && el.querySelector(".mini-spinner")) {
+          if (el && el.querySelector && (el.querySelector(".mini-spinner") || el.querySelector(".credit-load-bar"))) {
             if (id === "home-bonus") el.innerText = "0.00";
             else if (id === "home-ref" || id === "home-views") el.innerText = "0";
-            else if (id === "home-balance") el.innerText = (Number(appCreditVal) || 0).toFixed(2);
           }
         });
-        const creditEl = document.getElementById("info-credit");
-        if (creditEl && creditEl.querySelector && creditEl.querySelector(".mini-spinner")) {
-          creditEl.innerText = "ক্রেডিট: " + (Number(appCreditVal) || 0).toFixed(2);
-        }
       }, 5000);
     }
 
@@ -1537,7 +1620,7 @@
       st.textContent = '#kr-cr-toast{position:fixed;top:calc(env(safe-area-inset-top,0px)+16px);left:50%;transform:translateX(-50%) translateY(-120%);z-index:100000;max-width:90%;min-width:200px;background:rgba(0,230,118,0.95);color:#0a0a0a;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,0.35);transition:transform .35s ease;text-align:center;pointer-events:none;}#kr-cr-toast.show{transform:translateX(-50%) translateY(0);}#kr-cr-toast.err{background:rgba(255,82,82,0.95);color:#fff;}';
       document.head.appendChild(st);
     }
-    window.showCreditMessage = function(msg, isError) {
+    window.showCreditMessage = function(msg, isError, withModal) {
       try {
         ensureToastCss();
         var t = document.getElementById('kr-cr-toast');
@@ -1550,11 +1633,12 @@
         t.textContent = msg || '';
         t.classList.add('show');
         clearTimeout(window._krToastT);
-        window._krToastT = setTimeout(function() { t.classList.remove('show'); }, 4200);
+        window._krToastT = setTimeout(function() { t.classList.remove('show'); }, isError ? 4500 : 3800);
       } catch (e) {}
-      try {
-        if (!isError) showGatewayModal('success', 'ক্রেডিট আপডেট', msg);
-      } catch (e2) {}
+      // শুধু withModal=true হলে গেটওয়ে — ইন্টারমিডিয়েট "খোলা হচ্ছে" মডাল নয়
+      if (withModal && !isError) {
+        try { showGatewayModal('success', 'ক্রেডিট আপডেট', msg); } catch (e2) {}
+      }
     };
 
     // ========== ADS (Monetag) ==========
@@ -1660,7 +1744,7 @@
         return;
       }
       if (_adBusy) {
-        showCreditMessage('বিজ্ঞাপন চলছে — অপেক্ষা করুন...', true);
+        showCreditMessage('বিজ্ঞাপন/ক্রেডিট প্রসেস চলছে — অপেক্ষা করুন।', true);
         return;
       }
       if (Date.now() < _adCooldownUntil) {
@@ -1671,25 +1755,54 @@
       _adBusy = true;
       var btn = document.querySelector('.watch-btn-normal');
       var oldHtml = btn ? btn.innerHTML : '';
+      var progressIv = null;
       try {
         if (btn) {
           btn.disabled = true;
-          btn.innerHTML = 'বিজ্ঞাপন লোড হচ্ছে...';
+          btn.innerHTML = 'অপেক্ষা করুন...';
         }
-        showCreditMessage('বিজ্ঞাপন খোলা হচ্ছে...', false);
+        // শুধু টোস্ট — "খোলা হচ্ছে" মডাল নয়
+        showCreditMessage('বিজ্ঞাপন শুরু হচ্ছে… সম্পূর্ণ দেখুন।', false, false);
+        setAdProcess(true, 'বিজ্ঞাপন চলছে…', 'সম্পূর্ণ বিজ্ঞাপন দেখুন। শেষ হলে ক্রেডিট অটো যোগ হবে।', 20);
+        var fakePct = 20;
+        progressIv = setInterval(function() {
+          if (fakePct < 70) {
+            fakePct += 3;
+            setAdProcess(true, 'বিজ্ঞাপন চলছে…', 'সম্পূর্ণ বিজ্ঞাপন দেখুন। শেষ হলে ক্রেডিট অটো যোগ হবে।', fakePct);
+          }
+        }, 400);
+
         await callMonetagAd();
-        // reward after ad closes / resolves
+
+        // বিজ্ঞাপন শেষ — এখন ক্রেডিট আপডেট (আর "খোলা হচ্ছে" বলবে না)
+        if (progressIv) { clearInterval(progressIv); progressIv = null; }
+        setAdProcess(true, 'ক্রেডিট আপডেট হচ্ছে…', 'বিজ্ঞাপন সম্পূর্ণ হয়েছে। আপনার ক্রেডিট যোগ করা হচ্ছে।', 85);
+        showCreditMessage('বিজ্ঞাপন শেষ — ক্রেডিট যোগ করা হচ্ছে…', false, false);
+
         var got = await recordAdViewAndReward();
-        _adCooldownUntil = Date.now() + 15000;
-        showCreditMessage('✅ অভিনন্দন! ' + got + ' ক্রেডিট যোগ হয়েছে। বর্তমান: ' + (Number(appCreditVal) || 0).toFixed(2), false);
-        showGatewayModal('success', 'বিজ্ঞাপন সফল', 'আপনার অ্যাকাউন্টে ' + got + ' ক্রেডিট যোগ হয়েছে।\nবর্তমান ক্রেডিট: ' + (Number(appCreditVal) || 0).toFixed(2));
+        creditLoadedOnce = true;
+        window._creditFetchDone = true;
+        paintCreditDOM();
+
+        setAdProcess(true, 'সফল!', 'ক্রেডিট আপডেট সম্পন্ন।', 100);
+        await new Promise(function(r) { setTimeout(r, 450); });
+        setAdProcess(false);
+
+        _adCooldownUntil = Date.now() + 12000;
+        var bal = (Number(appCreditVal) || 0).toFixed(2);
+        var okMsg = '✅ অভিনন্দন! +' + got + ' ক্রেডিট যোগ হয়েছে।\nবর্তমান মোট: ' + bal;
+        showCreditMessage('✅ +' + got + ' ক্রেডিট · মোট ' + bal, false, false);
+        showGatewayModal('success', 'বিজ্ঞাপন সফল — ক্রেডিট যোগ', okMsg);
       } catch (err) {
         console.warn('ad error', err);
-        // Fallback: SDK fail হলেও ইউজারকে জানাও — রিওয়ার্ড দিও না (অপব্যবহার রোধ)
-        showGatewayModal('error', 'বিজ্ঞাপন চালু হয়নি', 'নেটওয়ার্ক বা অ্যাড ব্লকার চেক করুন। পরে আবার চেষ্টা করুন।\n(' + (err && err.message ? err.message : 'SDK') + ')');
-        showCreditMessage('বিজ্ঞাপন চালু হয়নি — আবার চেষ্টা করুন।', true);
+        if (progressIv) { clearInterval(progressIv); progressIv = null; }
+        setAdProcess(false);
+        showGatewayModal('error', 'বিজ্ঞাপন সম্পূর্ণ হয়নি', 'নেটওয়ার্ক/অ্যাড ব্লকার চেক করে আবার চেষ্টা করুন।\n(' + (err && err.message ? err.message : 'SDK') + ')');
+        showCreditMessage('বিজ্ঞাপন সম্পূর্ণ হয়নি — ক্রেডিট যোগ হয়নি।', true);
       } finally {
         _adBusy = false;
+        if (progressIv) try { clearInterval(progressIv); } catch (e) {}
+        try { setAdProcess(false); } catch (e) {}
         if (btn) {
           btn.disabled = false;
           btn.innerHTML = oldHtml || 'বিজ্ঞাপন দেখুন (+৩ ক্রেডিট)';
@@ -1702,11 +1815,14 @@
     addToAppCredit = async function(amount) {
       var before = Number(appCreditVal) || 0;
       await _origAddToAppCredit(amount);
+      creditLoadedOnce = true;
+      window._creditFetchDone = true;
+      paintCreditDOM();
       var after = Number(appCreditVal) || 0;
       var gained = Number((after - before).toFixed(2));
       if (gained > 0.009) {
         try {
-          showCreditMessage('💎 +' + gained.toFixed(2) + ' ক্রেডিট · মোট ' + after.toFixed(2), false);
+          showCreditMessage('💎 +' + gained.toFixed(2) + ' ক্রেডিট · মোট ' + after.toFixed(2), false, false);
         } catch (e) {}
       }
     };
