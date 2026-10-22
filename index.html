@@ -96,6 +96,7 @@
       padding: 0 0 24px 0;
     }
 
+    /* হেডার সেকশন — বামে ফিরে যান বাটন */
     .header {
       padding: 10px 12px 8px 12px;
       display: flex;
@@ -115,61 +116,13 @@
       width: 100%;
     }
 
-    .profile-initial {
-      width: 38px;
-      height: 38px;
-      background: var(--grad);
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: 700;
-      font-size: 15px;
-      color: #000;
-      overflow: hidden;
-      flex-shrink: 0;
-      box-shadow: 0 0 0 2px rgba(0,230,118,0.25);
-    }
-    .profile-initial img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .user-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .user-info h4 {
-      font-size: 15px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      width: 100%;
-    }
-    .user-info span#user-full-name {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .user-info p {
-      font-size: 13px;
-      color: var(--green);
-      font-weight: 600;
-      margin-top: 2px;
-    }
-
     .return-btn {
       background: var(--bg-card-2);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 6px 12px;
+      padding: 8px 14px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
@@ -179,6 +132,16 @@
       transition: all 0.2s;
     }
     .return-btn:hover { border-color: var(--green); color: var(--green); }
+
+    .header-title-balance {
+      margin-left: auto;
+      text-align: right;
+    }
+    .header-title-balance p {
+      font-size: 13px;
+      color: var(--green);
+      font-weight: 700;
+    }
 
     .content-section {
       padding: 10px 12px;
@@ -192,17 +155,50 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .hero-banner {
-      background: var(--grad);
-      border-radius: 14px;
-      padding: 14px;
+    /* মাঝখানে বড় প্রোফাইল কার্ড */
+    .profile-large-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 16px;
       text-align: center;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 6px 24px rgba(0,230,118,0.2);
+      box-shadow: var(--shadow);
+      margin-top: 10px;
     }
-    .hero-banner h2 { font-size: 15px; font-weight: 700; color: #0a0a0a; }
-    .hero-banner p { font-size: 11px; color: rgba(0,0,0,0.65); margin-top: 3px; font-weight: 500; }
+
+    .profile-large-pic {
+      width: 86px;
+      height: 86px;
+      background: var(--grad);
+      border-radius: 50%;
+      margin: 0 auto 12px auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 700;
+      font-size: 32px;
+      color: #000;
+      overflow: hidden;
+      box-shadow: 0 0 0 3px rgba(0,230,118,0.3);
+    }
+    .profile-large-pic img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-desc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .user-desc-row:last-child { border-bottom: none; }
+    .user-desc-row span { color: var(--text-muted); flex-shrink: 0; }
+    .user-desc-row b { color: var(--text); font-weight: 600; text-align: right; word-break: break-all; }
 
     .stats-grid {
       display: grid;
@@ -445,37 +441,6 @@
     .tl-bar-track { width: 100%; max-width: 280px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; }
     .tl-bar-fill { height: 100%; width: 0%; background: var(--grad); border-radius: 8px; }
     .tl-percent { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--green); }
-
-    .user-desc-card {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 16px 18px; margin-top: 16px; box-shadow: var(--shadow);
-    }
-    .user-desc-card h3 { font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-    .user-desc-card h3 i { color: var(--blue); }
-    .user-desc-row {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
-    }
-    .user-desc-row:last-child { border-bottom: none; }
-    .user-desc-row span { color: var(--text-muted); flex-shrink: 0; }
-    .user-desc-row b { color: var(--text); font-weight: 600; text-align: right; word-break: break-all; }
-
-    .rules-card {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 18px; margin-top: 16px; box-shadow: var(--shadow);
-    }
-    .rules-card h3 { font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: var(--orange); }
-    .rule-item {
-      background: var(--bg-card-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
-      padding: 12px 14px; margin-bottom: 10px; font-size: 12.5px; color: var(--text-muted); line-height: 1.55;
-    }
-    .rule-item:last-child { margin-bottom: 0; }
-    .rule-header-tag {
-      font-size: 11px; font-weight: 700; color: var(--orange); background: rgba(255, 145, 0, 0.1);
-      display: inline-block; padding: 2px 8px; border-radius: 4px; margin-bottom: 4px; text-transform: uppercase;
-    }
-    .rule-item strong { display: block; color: var(--green); font-size: 13px; margin-bottom: 4px; }
-    .rule-item .rule-reward { color: var(--orange); font-weight: 700; }
   </style>
 </head>
 <body>
@@ -489,7 +454,7 @@
 
     <div class="fs-description-box">
       <h4>লেনদেনের বিবরণী</h4>
-      <p>নিচে আপনার ট্রান্সফারের বিস্তারিত তথ্য দেওয়া হলো। লেনদেন চূড়ান্ত করতে মাঝখানের **KR** লেখা বাটনে আঙুল দিয়ে চেপে ধরে রাখুন। রিং পূর্ণ হওয়া মাত্রই ট্রানজেকশন সফলভাবে সম্পন্ন হয়ে যাবে।</p>
+      <p>নিচে আপনার ট্রান্সফারের বিস্তারিত তথ্য দেওয়া হলো। লেনদেন চূড়ান্ত করতে মাঝখানের **KR** লেখা বাটনে আঙুল দিয়ে চেপে ধরে রাখুন।</p>
 
       <div class="fs-summary-list">
         <div class="fs-summary-row">
@@ -525,7 +490,7 @@
   <div class="transfer-loading-overlay" id="transfer-loading-overlay">
     <div class="tl-spinner"></div>
     <div class="tl-title">ক্রেডিট পাঠানো হচ্ছে...</div>
-    <div class="tl-sub">দয়া করে অপেক্ষা করুন। একই সাথে আবার পাঠানো যাবে না।</div>
+    <div class="tl-sub">দয়া করে অপেক্ষা করুন।</div>
     <div class="tl-bar-track"><div class="tl-bar-fill" id="tl-bar-fill"></div></div>
     <div class="tl-percent" id="tl-percent">0%</div>
   </div>
@@ -533,35 +498,26 @@
   <div class="content-container" id="main-scroll-container">
     <div id="status-bar-safe" aria-hidden="true"></div>
 
+    <!-- হেডার: বামে ফিরে যান বাটন -->
     <div class="header">
       <div class="header-left">
-        <div class="profile-initial" id="profile-pic">?</div>
-        <div class="user-info">
-          <h4>
-            <span id="user-full-name">লোড হচ্ছে...</span>
-          </h4>
-          <p>ক্রেডিট: <span id="top-balance">0.00</span> টি</p>
-        </div>
         <button class="return-btn" onclick="returnToParent()">
           <i class="fas fa-arrow-left"></i> ফিরে যান
         </button>
+        <div class="header-title-balance">
+          <p>ক্রেডিট: <span id="top-balance">0.00</span> টি</p>
+        </div>
       </div>
     </div>
 
     <div id="home" class="content-section active">
-      <div class="hero-banner">
-        <h2>✨ KR Calculator A Credit Room 🎓</h2>
-        <p>🎯 আপনার প্রতিটি ক্রেডিট হলো গাণিতিক সমস্যার ধাপে ধাপে নিখুঁত সমাধান পাওয়ার চাবিকাঠি! 🧠💡</p>
-      </div>
-
-      <div class="user-desc-card">
-        <h3><i class="fas fa-user-circle"></i> ইউজারের প্রোফাইল তথ্য</h3>
+      <!-- বড় ইউজারের প্রোফাইল ফটো ও তথ্য মাঝখানে -->
+      <div class="profile-large-card">
+        <div class="profile-large-pic" id="profile-pic">?</div>
+        <h3 id="user-full-name" style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--text);">লোড হচ্ছে...</h3>
+        
         <div class="user-desc-row">
-          <span>নাম</span>
-          <b id="info-name">লোড হচ্ছে...</b>
-        </div>
-        <div class="user-desc-row">
-          <span>ইউআইডি</span>
+          <span>ইউআইডি (UID)</span>
           <b id="info-uid">লোড হচ্ছে...</b>
         </div>
         <div class="user-desc-row">
@@ -599,25 +555,6 @@
         <button class="watch-btn-normal" onclick="showAdAndEarn()">
           বিজ্ঞাপন দেখুন (+৩ ক্রেডিট)
         </button>
-      </div>
-
-      <div class="rules-card">
-        <h3><i class="fas fa-scroll"></i> বোনাস নিয়মাবলী</h3>
-        <div class="rule-item">
-          <div class="rule-header-tag">এককালীন অফার</div>
-          <strong>১. প্রথম লগইন বোনাস</strong>
-          প্রথমবার এই পেজে প্রবেশ করলে এককালীন <span class="rule-reward">৫ ক্রেডিট</span> ফ্রি দেওয়া হবে।
-        </div>
-        <div class="rule-item">
-          <div class="rule-header-tag">পরবর্তী অফার</div>
-          <strong>২. লেনদেন বোনাস</strong>
-          মোট লেনদেনের পরিমাণ <span class="rule-reward">১০০০+</span> হলে এককালীন <span class="rule-reward">৫০ ক্রেডিট</span> বোনাস পাবেন।
-        </div>
-        <div class="rule-item">
-          <div class="rule-header-tag">পরবর্তী অফার</div>
-          <strong>৩. বিজ্ঞাপন মাইলস্টোন</strong>
-          মোট বিজ্ঞাপন দেখা <span class="rule-reward">৫৫</span> হলে এককালীন <span class="rule-reward">৬০ ক্রেডিট</span> বোনাস পাবেন।
-        </div>
       </div>
     </div>
 
@@ -679,14 +616,14 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getDatabase, ref as rtdbRef, get as rtdbGet, set as rtdbSet } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref as rtdbRef, set as rtdbSet } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDUrso1G3orSxiZGTQ1vNYnmN0jdnJ3nSM",
       authDomain: "kr-calculator-a-bc1e2.firebaseapp.com",
       databaseURL: "https://kr-calculator-a-bc1e2-default-rtdb.firebaseio.com",
       projectId: "kr-calculator-a-bc1e2",
-      storageBucket: "kr-calculator-a-bc1e2.firebasestorage.app",
+      storageBucket: "kr-calculator-a-bc1e2.appspot.com",
       messagingSenderId: "916522220428",
       appId: "1:916522220428:web:b39f14d38c9fe45ecaf4a9",
       measurementId: "G-K4XGHWM4QF"
@@ -717,8 +654,6 @@
     const linkName = urlParams.get('name');
     const linkEmail = urlParams.get('email');
     const linkAvatar = urlParams.get('avatar') || urlParams.get('photo_url');
-    const linkHasAvatar = urlParams.get('has_avatar');
-    const linkAvatarKey = urlParams.get('avatar_key');
 
     let userId = null;
     let defaultName = "";
@@ -749,13 +684,7 @@
       userId = visitorId;
     }
 
-    if ((!sourceAvatar || sourceAvatar === "") && linkHasAvatar === "1" && linkAvatarKey) {
-      try {
-        const av = localStorage.getItem(linkAvatarKey);
-        if (av) sourceAvatar = av;
-      } catch (e) {}
-    }
-
+    // নির্দিষ্ট ৩টি সাব-ডকুমেন্ট পাথ
     const userDocRef = doc(db, ROOT_COLLECTION, userId);
     const creditProfileRef = doc(db, ROOT_COLLECTION, userId, "credit", "profile");
     const creditMainRef = doc(db, ROOT_COLLECTION, userId, "credit", "main_credit");
@@ -1135,24 +1064,25 @@
       paintCreditDOM();
 
       try {
-        const pSnap = await getDoc(creditProfileRef);
         let currentName = defaultName;
+        let currentAvatar = sourceAvatar;
+        let currentEmail = defaultEmail;
+
+        const pSnap = await getDoc(creditProfileRef);
         if (pSnap.exists()) {
           const pData = pSnap.data();
-          currentName = pData.name || defaultName;
-          document.getElementById("info-name").innerText = currentName;
-          document.getElementById("info-uid").innerText = pData.uid || userId;
-          document.getElementById("info-email").innerText = pData.email || defaultEmail || "সংরক্ষিত নেই";
-          
-          if (pData.avatar) {
-            sourceAvatar = pData.avatar;
-          }
+          if (pData.name) currentName = pData.name;
+          if (pData.avatar) currentAvatar = pData.avatar;
+          if (pData.email) currentEmail = pData.email;
         }
 
         document.getElementById("user-full-name").innerText = currentName;
+        document.getElementById("info-uid").innerText = userId;
+        document.getElementById("info-email").innerText = currentEmail || "সংরক্ষিত নেই";
+
         const picEl = document.getElementById("profile-pic");
-        if (sourceAvatar && (sourceAvatar.startsWith("http://") || sourceAvatar.startsWith("https://") || sourceAvatar.startsWith("data:image"))) {
-          picEl.innerHTML = `<img src="${sourceAvatar}" alt="Avatar" onerror="this.onerror=null; this.parentElement.innerHTML='${currentName ? currentName.charAt(0).toUpperCase() : 'U'}';">`;
+        if (currentAvatar && (currentAvatar.startsWith("http://") || currentAvatar.startsWith("https://") || currentAvatar.startsWith("data:image"))) {
+          picEl.innerHTML = `<img src="${currentAvatar}" alt="Avatar" onerror="this.onerror=null; this.parentElement.innerText='${currentName ? currentName.charAt(0).toUpperCase() : 'U'}';">`;
         } else {
           picEl.innerText = currentName ? currentName.charAt(0).toUpperCase() : "U";
         }
@@ -1178,7 +1108,7 @@
 
         let msg = "=== লেনদেন হিস্টরি ===\n\n[ নিজের ট্রান্সফার ]\n";
         const selfKeys = Object.keys(selfData);
-        if (selfKeys.length === 0) msg += "কোনো রেকর্ড নেই。\n";
+        if (selfKeys.length === 0) msg += "কোনো রেকর্ড নেই।\n";
         selfKeys.forEach((k, idx) => {
           let item = selfData[k];
           msg += `${idx + 1}. পরিমাণ: ${item.পরিমাণ} | ডায়াল: ${item.ডায়াল}\n`;
@@ -1186,7 +1116,7 @@
 
         msg += "\n[ বন্ধুর গিফট ]\n";
         const friendKeys = Object.keys(friendData);
-        if (friendKeys.length === 0) msg += "কোনো রেকর্ড নেই。\n";
+        if (friendKeys.length === 0) msg += "কোনো রেকর্ড নেই।\n";
         friendKeys.forEach((k, idx) => {
           let item = friendData[k];
           msg += `${idx + 1}. প্রাপক/প্রেরক: ${item.প্রাপক || item.প্রেরক} | পরিমাণ: ${item.পরিমাণ} | ডায়াল: ${item.ডায়াল}\n`;
@@ -1255,19 +1185,9 @@
 
     async function initApp() {
       const name = defaultName || "ইউজার";
-      document.getElementById("user-full-name").innerText = name;
-      document.getElementById("info-name").innerText = name;
-      document.getElementById("info-uid").innerText = userId;
-      document.getElementById("info-email").innerText = defaultEmail || "সংরক্ষিত নেই";
-
-      const picEl = document.getElementById("profile-pic");
-      if (sourceAvatar && (sourceAvatar.startsWith("http://") || sourceAvatar.startsWith("https://") || sourceAvatar.startsWith("data:image"))) {
-        picEl.innerHTML = `<img src="${sourceAvatar}" alt="Avatar" onerror="this.onerror=null; this.parentElement.innerHTML='${name ? name.charAt(0).toUpperCase() : 'U'}';">`;
-      } else {
-        picEl.innerText = name ? name.charAt(0).toUpperCase() : "U";
-      }
 
       try {
+        // ১. রুট ডকুমেন্টে ডেটা
         await setDoc(userDocRef, {
           uid: userId,
           name: name,
@@ -1276,6 +1196,7 @@
           updatedAt: Date.now()
         }, { merge: true });
 
+        // ২. `credit/profile` ডকে প্রোফাইল তথ্য
         await setDoc(creditProfileRef, {
           uid: userId,
           name: name,
@@ -1284,6 +1205,7 @@
           updatedAt: Date.now()
         }, { merge: true });
 
+        // ৩. `credit/main_credit` ডকে মূল ক্রেডিট
         const mainSnap = await getDoc(creditMainRef);
         if (!mainSnap.exists()) {
           await setDoc(creditMainRef, { user_credit: 5, updatedAt: Date.now() }, { merge: true });
