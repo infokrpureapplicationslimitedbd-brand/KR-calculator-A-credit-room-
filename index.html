@@ -806,6 +806,23 @@
     const linkEmail = urlParams.get('email');
     const linkAvatar = urlParams.get('avatar') || urlParams.get('photo_url');
 
+    // === Avatar from calculator localStorage ===
+    function loadPassedAvatar() {
+      try {
+        const key = urlParams.get('avatar_key') || 'kr_pass_avatar';
+        const has = urlParams.get('has_avatar') === '1';
+        if (has) {
+          const av = localStorage.getItem(key) || localStorage.getItem('kr_pass_avatar');
+          if (av && (av.startsWith('http') || av.startsWith('data:image') || av.startsWith('blob:'))) {
+            sourceAvatar = av;
+          }
+        }
+        if (!sourceAvatar && linkAvatar) sourceAvatar = linkAvatar;
+      } catch (e) {}
+    }
+    loadPassedAvatar();
+
+
     let userId = null;
     let defaultName = "";
     let defaultEmail = "";
@@ -840,13 +857,21 @@
     const holdDuration = 1200;
 
     window.returnToParent = function() {
+      try {
+        if (window.history.length > 1) {
+          window.history.back();
+          return;
+        }
+      } catch (e) {}
       if (document.referrer && document.referrer !== window.location.href) {
         window.location.href = document.referrer;
-      } else if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.close();
+        return;
       }
+      try { window.close(); } catch (e) {}
+      // fallback: same origin calculator
+      try {
+        window.location.href = (window.location.origin || '') + '/';
+      } catch (e2) {}
     };
 
     window.scrollToInput = function(element) {
@@ -980,8 +1005,8 @@
     };
 
     window.openFullscreenConfirm = async function() {
-      if (!userId || !defaultEmail) {
-        showGatewayModal("error", "ত্রুটি", "ইউজার আইডি বা ইমেইল সঠিক নয়।");
+      if (!userId) {
+        showGatewayModal("error", "ত্রুটি", "ইউজার আইডি সঠিক নয়।");
         return;
       }
 
@@ -1359,7 +1384,7 @@
     };
 
     async function initApp() {
-      if (!userId || !defaultEmail) return;
+      if (!userId) return; // email optional for faster boot
 
       const name = defaultName || "ইউজার";
 
