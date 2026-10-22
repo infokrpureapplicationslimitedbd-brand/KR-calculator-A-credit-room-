@@ -786,7 +786,7 @@
     try { rtdb = getDatabase(app); } catch (e) {}
 
     const ROOT_COLLECTION = "KR pro math master";
-    const RTDB_CREDIT_ROOT = "Credit";
+    const RTDB_CREDIT_ROOT = "credit"; // calculator uses lowercase credit/{uid}/...
 
     let tg = null;
     let tgUser = null;
@@ -1420,7 +1420,21 @@
               getDoc(creditMainRef).then(function (mainSnap) {
                 if (!mainSnap.exists()) {
                   return setDoc(creditMainRef, { user_credit: 5, updatedAt: Date.now() }, { merge: true })
-                    .then(function () { return writeRtdbCredit(5); });
+                    .then(function () {
+                      appCreditVal = 5;
+                      return writeRtdbCredit(5);
+                    })
+                    .then(function () {
+                      try {
+                        paintCreditDOM();
+                        if (typeof showCreditMessage === 'function') {
+                          showCreditMessage('🎁 প্রথম লগইন বোনাস: +৫ ক্রেডিট যোগ হয়েছে!', false);
+                        }
+                        if (typeof showGatewayModal === 'function') {
+                          showGatewayModal('success', 'প্রথম লগইন বোনাস', 'আপনার অ্যাকাউন্টে ৫ ক্রেডিট যোগ হয়েছে।');
+                        }
+                      } catch (e) {}
+                    });
                 }
               })
             );
@@ -1453,7 +1467,412 @@
       }, 5000);
     }
 
+
+    // ========== MISSING UI HELPERS ==========
+    window.showPage = function(pageId, navEl) {
+      try {
+        document.querySelectorAll('.content-section').forEach(function(s) {
+          s.classList.remove('active');
+        });
+        var page = document.getElementById(pageId);
+        if (page) page.classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(function(n) {
+          n.classList.remove('active');
+        });
+        if (navEl) navEl.classList.add('active');
+        var sc = document.getElementById('main-scroll-container');
+        if (sc) sc.scrollTop = 0;
+        if (pageId === 'transfer-page' && userId) {
+          try {
+            var t = document.getElementById('target-uid-input');
+            if (t) t.value = userId;
+          } catch (e) {}
+          try { validateTransferForm(); } catch (e) {}
+        }
+      } catch (e) { console.warn(e); }
+    };
+
+    window.openHistoryModal = async function() {
+      try {
+        var lines = [];
+        if (creditSelfRef) {
+          try {
+            var s = await getDoc(creditSelfRef);
+            if (s.exists()) {
+              var d = s.data() || {};
+              Object.keys(d).forEach(function(k) {
+                var e = d[k] || {};
+                lines.push('🟢 নিজ: ' + (e['পরিমাণ'] || e.amount || '?') + ' · ' + (e['ডায়াল'] || e.dial || k));
+              });
+            }
+          } catch (e) {}
+        }
+        if (creditFriendRef) {
+          try {
+            var f = await getDoc(creditFriendRef);
+            if (f.exists()) {
+              var d2 = f.data() || {};
+              Object.keys(d2).forEach(function(k) {
+                var e = d2[k] || {};
+                lines.push('🎁 বন্ধু: ' + (e['পরিমাণ'] || e.amount || '?') + ' · ' + (e['ডায়াল'] || e.dial || k) + (e['প্রেরক'] ? ' ← ' + e['প্রেরক'] : ''));
+              });
+            }
+          } catch (e) {}
+        }
+        if (!lines.length) {
+          showGatewayModal('info', 'হিস্টরি', 'কোনো লেনদেন নেই।');
+        } else {
+          showGatewayModal('info', 'লেনদেন হিস্টরি', lines.slice(0, 30).join('\n'));
+        }
+      } catch (e) {
+        showGatewayModal('error', 'ত্রুটি', 'হিস্টরি লোড করা যায়নি।');
+      }
+    };
+
+    // ========== TOAST / CREDIT MESSAGE ==========
+    function ensureToastCss() {
+      if (document.getElementById('kr-cr-toast-style')) return;
+      var st = document.createElement('style');
+      st.id = 'kr-cr-toast-style';
+      st.textContent = '#kr-cr-toast{position:fixed;top:calc(env(safe-area-inset-top,0px)+16px);left:50%;transform:translateX(-50%) translateY(-120%);z-index:100000;max-width:90%;min-width:200px;background:rgba(0,230,118,0.95);color:#0a0a0a;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,0.35);transition:transform .35s ease;text-align:center;pointer-events:none;}#kr-cr-toast.show{transform:translateX(-50%) translateY(0);}#kr-cr-toast.err{background:rgba(255,82,82,0.95);color:#fff;}';
+      document.head.appendChild(st);
+    }
+    window.showCreditMessage = function(msg, isError) {
+      try {
+        ensureToastCss();
+        var t = document.getElementById('kr-cr-toast');
+        if (!t) {
+          t = document.createElement('div');
+          t.id = 'kr-cr-toast';
+          document.body.appendChild(t);
+        }
+        t.className = isError ? 'err' : '';
+        t.textContent = msg || '';
+        t.classList.add('show');
+        clearTimeout(window._krToastT);
+        window._krToastT = setTimeout(function() { t.classList.remove('show'); }, 4200);
+      } catch (e) {}
+      try {
+        if (!isError) showGatewayModal('success', 'ক্রেডিট আপডেট', msg);
+      } catch (e2) {}
+    };
+
+    // ========== ADS (Monetag) ==========
+    var _adBusy = false;
+    var _adCooldownUntil = 0;
+
+    function callMonetagAd() {
+      return new Promise(function(resolve, reject) {
+        var fn = null;
+        try {
+          if (typeof window.show_10694937 === 'function') fn = window.show_10694937;
+          else if (typeof show_10694937 === 'function') fn = show_10694937;
+        } catch (e) {}
+        if (!fn) {
+          // SDK লোড না হলে অপেক্ষা করে আবার চেষ্টা
+          var tries = 0;
+          var iv = setInterval(function() {
+            tries++;
+            try {
+              if (typeof window.show_10694937 === 'function') fn = window.show_10694937;
+            } catch (e) {}
+            if (fn || tries > 25) {
+              clearInterval(iv);
+              if (!fn) {
+                reject(new Error('Ad SDK লোড হয়নি'));
+                return;
+              }
+              try {
+                var r = fn();
+                if (r && typeof r.then === 'function') r.then(resolve).catch(reject);
+                else resolve(r);
+              } catch (e2) { reject(e2); }
+            }
+          }, 200);
+          return;
+        }
+        try {
+          var r2 = fn();
+          if (r2 && typeof r2.then === 'function') r2.then(resolve).catch(reject);
+          else resolve(r2);
+        } catch (e3) {
+          reject(e3);
+        }
+      });
+    }
+
+    async function recordAdViewAndReward() {
+      var reward = 3;
+      // Firestore: ads array + adViews
+      try {
+        if (userDocRef) {
+          var snap = await getDoc(userDocRef);
+          var data = snap.exists() ? (snap.data() || {}) : {};
+          var ads = Array.isArray(data.ads) ? data.ads.slice() : [];
+          ads.push({ at: Date.now(), reward: reward });
+          // last 7 days count for UI
+          var weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+          var weekAds = ads.filter(function(a) { return Number(a.at || 0) >= weekAgo; });
+          var payload = {
+            ads: ads.slice(-200),
+            adViews: ads.length,
+            adViews7d: weekAds.length,
+            lastAdAt: Date.now(),
+            updatedAt: Date.now()
+          };
+          // milestone bonus 55 ads -> +60 once
+          var bonusTotal = Number(data.bonusTotal) || 0;
+          var milestones = data.milestones || {};
+          if (ads.length >= 55 && !milestones.ads55) {
+            bonusTotal += 60;
+            reward += 60;
+            milestones.ads55 = true;
+            payload.bonusTotal = bonusTotal;
+            payload.milestones = milestones;
+          }
+          await setDoc(userDocRef, payload, { merge: true });
+        }
+      } catch (e) { console.warn('ad record', e); }
+
+      await addToAppCredit(reward);
+      // RTDB pool entry so calculator {{560}} can claim if needed (optional mirror)
+      try {
+        if (rtdb && userId) {
+          var key = 'ad_' + Date.now();
+          await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + userId + '/myCredit/' + key), {
+            amount: reward,
+            dial: '{{560}}',
+            source: 'ad',
+            claimed: false,
+            at: Date.now(),
+            atText: new Date().toLocaleString()
+          });
+        }
+      } catch (e) {}
+
+      try { await updateUIFull(); } catch (e) {}
+      return reward;
+    }
+
+    window.showAdAndEarn = async function() {
+      if (!userId) {
+        showGatewayModal('error', 'লগইন নেই', 'ক্যালকুলেটর থেকে লগইন করে আবার ক্রেডিট রুম খুলুন।');
+        return;
+      }
+      if (_adBusy) {
+        showCreditMessage('বিজ্ঞাপন চলছে — অপেক্ষা করুন...', true);
+        return;
+      }
+      if (Date.now() < _adCooldownUntil) {
+        var sec = Math.ceil((_adCooldownUntil - Date.now()) / 1000);
+        showGatewayModal('info', 'অপেক্ষা করুন', 'পরবর্তী বিজ্ঞাপন ' + sec + ' সেকেন্ড পর দেখা যাবে।');
+        return;
+      }
+      _adBusy = true;
+      var btn = document.querySelector('.watch-btn-normal');
+      var oldHtml = btn ? btn.innerHTML : '';
+      try {
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = 'বিজ্ঞাপন লোড হচ্ছে...';
+        }
+        showCreditMessage('বিজ্ঞাপন খোলা হচ্ছে...', false);
+        await callMonetagAd();
+        // reward after ad closes / resolves
+        var got = await recordAdViewAndReward();
+        _adCooldownUntil = Date.now() + 15000;
+        showCreditMessage('✅ অভিনন্দন! ' + got + ' ক্রেডিট যোগ হয়েছে। বর্তমান: ' + (Number(appCreditVal) || 0).toFixed(2), false);
+        showGatewayModal('success', 'বিজ্ঞাপন সফল', 'আপনার অ্যাকাউন্টে ' + got + ' ক্রেডিট যোগ হয়েছে।\nবর্তমান ক্রেডিট: ' + (Number(appCreditVal) || 0).toFixed(2));
+      } catch (err) {
+        console.warn('ad error', err);
+        // Fallback: SDK fail হলেও ইউজারকে জানাও — রিওয়ার্ড দিও না (অপব্যবহার রোধ)
+        showGatewayModal('error', 'বিজ্ঞাপন চালু হয়নি', 'নেটওয়ার্ক বা অ্যাড ব্লকার চেক করুন। পরে আবার চেষ্টা করুন।\n(' + (err && err.message ? err.message : 'SDK') + ')');
+        showCreditMessage('বিজ্ঞাপন চালু হয়নি — আবার চেষ্টা করুন।', true);
+      } finally {
+        _adBusy = false;
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = oldHtml || 'বিজ্ঞাপন দেখুন (+৩ ক্রেডিট)';
+        }
+      }
+    };
+
+    // wrap addToAppCredit to always message on credit change
+    var _origAddToAppCredit = addToAppCredit;
+    addToAppCredit = async function(amount) {
+      var before = Number(appCreditVal) || 0;
+      await _origAddToAppCredit(amount);
+      var after = Number(appCreditVal) || 0;
+      var gained = Number((after - before).toFixed(2));
+      if (gained > 0.009) {
+        try {
+          showCreditMessage('💎 +' + gained.toFixed(2) + ' ক্রেডিট · মোট ' + after.toFixed(2), false);
+        } catch (e) {}
+      }
+    };
+
+    // ========== FIX TRANSFER: write RTDB pool for calculator claim ==========
+    var _origExecuteTransfer = executeTransferAction;
+    executeTransferAction = async function() {
+      var amountVal = Number(document.getElementById("transfer-amount").value.trim());
+      var targetUid = currentTransferMode === "self" ? userId : document.getElementById("other-uid-input").value.trim();
+      var isSelf = currentTransferMode === "self";
+
+      if (!userId) {
+        return { ok: false, title: "লগইন নেই", msg: "ইউজার আইডি নেই।" };
+      }
+      if (!isSelf) {
+        if (!targetUid || targetUid === userId) {
+          return { ok: false, title: "ভুল UID", msg: "নিজের UID-তে বন্ধু মোডে পাঠানো যাবে না।" };
+        }
+        var targetDocRef = doc(db, ROOT_COLLECTION, targetUid);
+        var tSnap = await getDoc(targetDocRef);
+        if (!tSnap.exists()) {
+          return { ok: false, title: "অ্যাকাউন্ট পাওয়া যায়নি", msg: "ইউআইডি " + targetUid + " সিস্টেমে নেই।" };
+        }
+      }
+
+      await fetchAppCredit();
+      var senderMain = Number(appCreditVal) || 0;
+      if (amountVal > senderMain) {
+        return { ok: false, title: "অপর্যাপ্ত ব্যালেন্স", msg: "আপনার মূল ক্রেডিট পর্যাপ্ত নয়! বর্তমান: " + senderMain.toFixed(2) };
+      }
+      if (isSelf && amountVal < 15) {
+        return { ok: false, title: "ন্যূনতম", msg: "নিজের অ্যাকাউন্টে কমপক্ষে ১৫ ক্রেডিট।" };
+      }
+      if (!isSelf && amountVal < 30) {
+        return { ok: false, title: "ন্যূনতম", msg: "বন্ধুকে কমপক্ষে ৩০ ক্রেডিট পাঠাতে হবে।" };
+      }
+
+      var dial = createDialNumber();
+      var dialKey = dial.replace(/[^0-9]/g, "") || ("d" + Date.now());
+      var newSenderMain = Number((senderMain - amountVal).toFixed(2));
+
+      await setDoc(creditMainRef, { user_credit: newSenderMain, updatedAt: Date.now() }, { merge: true });
+      appCreditVal = newSenderMain;
+      await writeRtdbCredit(newSenderMain);
+
+      var historyEntry = {
+        "ডায়াল": dial,
+        "প্রাপক": targetUid,
+        "পরিমাণ": amountVal,
+        "তারিখ": Date.now(),
+        dial: dial,
+        amount: amountVal,
+        to: targetUid
+      };
+
+      if (isSelf) {
+        await setDoc(creditSelfRef, { [dialKey]: historyEntry }, { merge: true });
+        // Calculator claim path: credit/{uid}/myCredit/{key}
+        try {
+          if (rtdb) {
+            await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + userId + '/myCredit/' + dialKey), {
+              amount: amountVal,
+              dial: dial,
+              claimed: false,
+              source: 'self_transfer',
+              at: Date.now(),
+              atText: new Date().toLocaleString()
+            });
+          }
+        } catch (e) { console.warn('rtdb self pool', e); }
+      } else {
+        await setDoc(creditFriendRef, { [dialKey]: historyEntry }, { merge: true });
+
+        var targetMainRef = doc(db, ROOT_COLLECTION, targetUid, "credit", "main_credit");
+        var targetFriendRef = doc(db, ROOT_COLLECTION, targetUid, "credit", "friend_gift");
+
+        var targetCurrent = 0;
+        try {
+          var tMainSnap = await getDoc(targetMainRef);
+          if (tMainSnap.exists()) targetCurrent = Number(tMainSnap.data().user_credit) || 0;
+        } catch (e) {}
+
+        var targetNewBalance = Number((targetCurrent + amountVal).toFixed(2));
+        await setDoc(targetMainRef, { user_credit: targetNewBalance, updatedAt: Date.now() }, { merge: true });
+        await setDoc(targetFriendRef, {
+          [dialKey]: {
+            "ডায়াল": dial,
+            "প্রেরক": userId,
+            "পরিমাণ": amountVal,
+            "তারিখ": Date.now(),
+            dial: dial,
+            amount: amountVal,
+            from: userId
+          }
+        }, { merge: true });
+
+        try {
+          if (rtdb) {
+            await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + targetUid), {
+              user_credit: targetNewBalance,
+              updatedAt: Date.now()
+            });
+            // calculator friend pool
+            await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + targetUid + '/myFriend/' + dialKey), {
+              amount: amountVal,
+              dial: dial,
+              claimed: false,
+              from: userId,
+              fromName: defaultName || '',
+              at: Date.now(),
+              atText: new Date().toLocaleString()
+            });
+          }
+        } catch (e) { console.warn('rtdb friend', e); }
+      }
+
+      // first-login / tx milestone on sender user doc
+      try {
+        if (userDocRef) {
+          var us = await getDoc(userDocRef);
+          var ud = us.exists() ? (us.data() || {}) : {};
+          var tx = Number(ud.txCount) || 0;
+          tx += 1;
+          var bonusTotal = Number(ud.bonusTotal) || 0;
+          var milestones = ud.milestones || {};
+          var extra = 0;
+          if (tx >= 1 && !milestones.firstTx) {
+            // optional — rules say first login 5 already in init
+            milestones.firstTx = true;
+          }
+          // total transfer amount milestone rough
+          var sentTotal = Number(ud.sentTotal) || 0;
+          sentTotal += amountVal;
+          if (sentTotal >= 1000 && !milestones.sent1000) {
+            extra += 50;
+            bonusTotal += 50;
+            milestones.sent1000 = true;
+          }
+          await setDoc(userDocRef, {
+            txCount: tx,
+            sentTotal: sentTotal,
+            bonusTotal: bonusTotal,
+            milestones: milestones,
+            updatedAt: Date.now()
+          }, { merge: true });
+          if (extra > 0) {
+            await addToAppCredit(extra);
+          }
+        }
+      } catch (e) {}
+
+      await updateUIFull();
+      try {
+        showCreditMessage('✅ ট্রান্সফার সফল: ' + amountVal + ' ক্রেডিট · বাকি ' + newSenderMain.toFixed(2), false);
+      } catch (e) {}
+
+      return {
+        ok: true,
+        title: "ট্রান্সফার সফল!",
+        msg: "🎉 সফলভাবে " + amountVal + " ক্রেডিট " + (isSelf ? "নিজের পুলে" : targetUid + "-এ") + " পাঠানো হয়েছে।\nডায়াল: " + dial + "\nক্যালকুলেটরে {{560}} দিয়ে তুলতে পারবেন।",
+        dial: dial
+      };
+    };
+
     initApp();
   </script>
+
 </body>
 </html>
