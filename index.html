@@ -43,41 +43,36 @@
       --shadow: 0 8px 32px rgba(0,0,0,0.4);
       --radius: 18px;
       --radius-sm: 12px;
-      --safe-top: calc(env(safe-area-inset-top, 0px) + 32px);
+      --safe-top: calc(env(safe-area-inset-top, 0px) + 20px);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    input, textarea {
+      -webkit-user-select: auto !important;
+      -moz-user-select: auto !important;
+      -ms-user-select: auto !important;
+      user-select: auto !important;
+    }
 
     html, body {
       height: 100%;
       width: 100%;
       overflow: hidden;
+      background: var(--bg);
     }
-
-    #status-bar-safe {
-      display: block;
-      width: 100%;
-      height: var(--safe-top);
-      min-height: var(--safe-top);
-      background: #07070c;
-      flex-shrink: 0;
-      pointer-events: none;
-    }
-
-    #ad-top-shield {
-      display: none !important;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: calc(env(safe-area-inset-top, 0px) + 52px);
-      background: #07070c;
-      z-index: 99990;
-      pointer-events: none;
-    }
-    #ad-top-shield.on { display: block !important; }
 
     body {
       font-family: 'Hind Siliguri', 'Segoe UI', sans-serif;
-      background: var(--bg);
       color: var(--text);
       display: flex;
       flex-direction: column;
@@ -93,58 +88,10 @@
       top: 0; left: 0; right: 0; bottom: 58px;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 0 0 24px 0;
-    }
-
-    /* হেডার সেকশন — বামে ফিরে যান বাটন */
-    .header {
-      padding: 10px 12px 8px 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(7,7,12,0.98);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      width: 100%;
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-      width: 100%;
-    }
-
-    .return-btn {
-      background: var(--bg-card-2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-      transition: all 0.2s;
-    }
-    .return-btn:hover { border-color: var(--green); color: var(--green); }
-
-    .header-title-balance {
-      margin-left: auto;
-      text-align: right;
-    }
-    .header-title-balance p {
-      font-size: 13px;
-      color: var(--green);
-      font-weight: 700;
+      padding: var(--safe-top) 14px 24px 14px;
     }
 
     .content-section {
-      padding: 10px 12px;
       display: none;
       animation: fadeIn 0.35s ease;
     }
@@ -155,56 +102,160 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* মাঝখানে বড় প্রোফাইল কার্ড */
-    .profile-large-card {
+    .home-return-box {
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .return-capsule-btn {
+      background: rgba(0,230,118,0.12);
+      border: 1px solid var(--green);
+      color: var(--green);
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0, 230, 118, 0.2);
+    }
+    .return-capsule-btn:active {
+      transform: scale(0.95);
+      background: var(--green);
+      color: #000;
+    }
+
+    /* প্রোফাইল কার্ড লেআউট */
+    .profile-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 20px 16px;
+      margin-bottom: 14px;
       text-align: center;
       box-shadow: var(--shadow);
-      margin-top: 10px;
+      background-image: linear-gradient(to bottom, rgba(0,230,118,0.05), transparent);
+      position: relative;
     }
 
-    .profile-large-pic {
-      width: 86px;
-      height: 86px;
-      background: var(--grad);
+    .profile-avatar-box {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 12px;
       border-radius: 50%;
-      margin: 0 auto 12px auto;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: 700;
-      font-size: 32px;
-      color: #000;
-      overflow: hidden;
-      box-shadow: 0 0 0 3px rgba(0,230,118,0.3);
+      background: var(--grad);
+      padding: 3px;
+      box-shadow: 0 0 20px rgba(0, 230, 118, 0.25);
     }
-    .profile-large-pic img {
+
+    .profile-avatar-box img, .avatar-fallback {
       width: 100%;
       height: 100%;
+      border-radius: 50%;
       object-fit: cover;
+      background: #1a1a24;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--green);
     }
 
-    .user-desc-row {
+    /* নাম (১ম লাইন) */
+    .profile-details h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+      min-height: 26px;
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
+      align-items: center;
+      justify-content: center;
     }
-    .user-desc-row:last-child { border-bottom: none; }
-    .user-desc-row span { color: var(--text-muted); flex-shrink: 0; }
-    .user-desc-row b { color: var(--text); font-weight: 600; text-align: right; word-break: break-all; }
+
+    /* ইমেইল (২য় লাইন) */
+    .email-row {
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .email-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--blue);
+      padding: 5px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      word-break: break-all;
+      min-height: 28px;
+    }
+
+    /* ক্রেডিট এবং ইউআইডি (৩য় লাইন) */
+    .credit-uid-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .credit-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 145, 0, 0.15);
+      color: var(--orange);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(255, 145, 0, 0.3);
+      min-width: 100px;
+      min-height: 28px;
+    }
+
+    .uid-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--green-dim);
+      color: var(--green);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid rgba(0, 230, 118, 0.3);
+      min-height: 28px;
+    }
+
+    .hero-banner {
+      background: var(--grad);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(0,230,118,0.2);
+      margin-bottom: 12px;
+    }
+    .hero-banner h2 { font-size: 15px; font-weight: 700; color: #0a0a0a; }
+    .hero-banner p { font-size: 11px; color: rgba(0,0,0,0.65); margin-top: 3px; font-weight: 500; }
 
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-top: 12px;
+      margin-bottom: 12px;
     }
 
     .stat-card {
@@ -228,7 +279,15 @@
     .stat-icon.purple { background: rgba(168,85,247,0.15); color: var(--purple); }
 
     .stat-card span { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-    .stat-card b { font-size: 17px; font-weight: 700; color: var(--text); }
+    .stat-card b {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 26px;
+    }
 
     .card-box {
       background: var(--bg-card);
@@ -304,7 +363,7 @@
       background: var(--bg);
       z-index: 99990;
       display: flex; flex-direction: column;
-      padding: 12px;
+      padding: 16px;
       padding-top: var(--safe-top);
       transform: translateY(100%);
       transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -399,9 +458,45 @@
     .gateway-icon-wrap.info { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
 
     .gateway-modal-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-    .gateway-modal-box p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; white-space: pre-line; }
+    .gateway-modal-box p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; white-space: pre-line; }
     .gateway-btn { width: 100%; padding: 13px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
     .gateway-btn.primary { background: var(--grad); color: #0a0a0a; box-shadow: 0 4px 15px rgba(0,230,118,0.25); }
+
+    /* ডায়াল কোড কপি বক্স */
+    .dial-copy-box {
+      background: var(--bg-card-2);
+      border: 1px solid var(--green);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      box-shadow: 0 0 10px rgba(0,230,118,0.15);
+    }
+    .dial-code-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 0.5px;
+      user-select: text !important;
+      -webkit-user-select: text !important;
+    }
+    .copy-btn {
+      background: var(--green);
+      color: #000;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: transform 0.1s;
+    }
+    .copy-btn:active { transform: scale(0.92); }
 
     .nav-bar {
       position: fixed; bottom: 0; left: 0; right: 0; height: 54px;
@@ -425,9 +520,9 @@
 
     .transfer-loading-overlay {
       position: fixed; inset: 0; z-index: 99995;
-      background: rgba(7, 7, 12, 0.92); backdrop-filter: blur(10px);
+      background: rgba(7, 7, 12, 0.95); backdrop-filter: blur(12px);
       display: none; flex-direction: column; align-items: center; justify-content: center;
-      padding: 24px; padding-top: var(--safe-top);
+      padding: 24px;
     }
     .transfer-loading-overlay.open { display: flex; }
     .tl-spinner {
@@ -438,14 +533,39 @@
     @keyframes tl-spin { to { transform: rotate(360deg); } }
     .tl-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; text-align: center; }
     .tl-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; text-align: center; }
-    .tl-bar-track { width: 100%; max-width: 280px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; }
-    .tl-bar-fill { height: 100%; width: 0%; background: var(--grad); border-radius: 8px; }
+    .tl-bar-track { width: 100%; max-width: 280px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden; position: relative; }
+    .tl-bar-fill { height: 100%; width: 0%; background: var(--grad); border-radius: 8px; transition: width 0.15s ease-out; }
     .tl-percent { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--green); }
+
+    .mini-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: tl-spin 0.6s linear infinite;
+      display: inline-block;
+    }
+
+    .rules-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px; margin-top: 16px; box-shadow: var(--shadow);
+    }
+    .rules-card h3 { font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: var(--orange); }
+    .rule-item {
+      background: var(--bg-card-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 12px 14px; margin-bottom: 10px; font-size: 12.5px; color: var(--text-muted); line-height: 1.55;
+    }
+    .rule-item:last-child { margin-bottom: 0; }
+    .rule-header-tag {
+      font-size: 11px; font-weight: 700; color: var(--orange); background: rgba(255, 145, 0, 0.1);
+      display: inline-block; padding: 2px 8px; border-radius: 4px; margin-bottom: 4px; text-transform: uppercase;
+    }
+    .rule-item strong { display: block; color: var(--green); font-size: 13px; margin-bottom: 4px; }
+    .rule-item .rule-reward { color: var(--orange); font-weight: 700; }
   </style>
 </head>
-<body>
-  <div id="ad-top-shield" aria-hidden="true"></div>
-
+<body oncontextmenu="return false;">
   <div class="fullscreen-confirm-overlay" id="fs-confirm-page">
     <div class="fs-header">
       <h3><i class="fas fa-shield-alt"></i> ট্রান্সফার কনফার্মেশন</h3>
@@ -454,7 +574,7 @@
 
     <div class="fs-description-box">
       <h4>লেনদেনের বিবরণী</h4>
-      <p>নিচে আপনার ট্রান্সফারের বিস্তারিত তথ্য দেওয়া হলো। লেনদেন চূড়ান্ত করতে মাঝখানের **KR** লেখা বাটনে আঙুল দিয়ে চেপে ধরে রাখুন।</p>
+      <p>নিচে আপনার ট্রান্সফারের বিস্তারিত তথ্য দেওয়া হলো। লেনদেন চূড়ান্ত করতে মাঝখানের **KR** লেখা বাটনে আঙুল দিয়ে চেপে ধরে রাখুন। রিং পূর্ণ হওয়া মাত্রই ট্রানজেকশন সফলভাবে সম্পন্ন হয়ে যাবে।</p>
 
       <div class="fs-summary-list">
         <div class="fs-summary-row">
@@ -483,6 +603,14 @@
       </div>
       <h3 id="gateway-title">স্ট্যাটাস শিরোনাম</h3>
       <p id="gateway-desc">এখানে বিস্তারিত মেসেজ প্রদর্শিত হবে।</p>
+
+      <div class="dial-copy-box" id="dial-copy-box">
+        <span class="dial-code-text" id="dial-code-val">*560*0#</span>
+        <button class="copy-btn" onclick="copyDialCode()">
+          <i class="fas fa-copy"></i> কপি
+        </button>
+      </div>
+
       <button id="gateway-action-btn" class="gateway-btn primary" onclick="closeGatewayModal()">ঠিক আছে</button>
     </div>
   </div>
@@ -490,62 +618,66 @@
   <div class="transfer-loading-overlay" id="transfer-loading-overlay">
     <div class="tl-spinner"></div>
     <div class="tl-title">ক্রেডিট পাঠানো হচ্ছে...</div>
-    <div class="tl-sub">দয়া করে অপেক্ষা করুন।</div>
+    <div class="tl-sub">দয়া করে অপেক্ষা করুন। ট্রানজেকশন প্রসেসিং চলছে।</div>
     <div class="tl-bar-track"><div class="tl-bar-fill" id="tl-bar-fill"></div></div>
     <div class="tl-percent" id="tl-percent">0%</div>
   </div>
 
   <div class="content-container" id="main-scroll-container">
-    <div id="status-bar-safe" aria-hidden="true"></div>
-
-    <!-- হেডার: বামে ফিরে যান বাটন -->
-    <div class="header">
-      <div class="header-left">
-        <button class="return-btn" onclick="returnToParent()">
-          <i class="fas fa-arrow-left"></i> ফিরে যান
+    <div id="home" class="content-section active">
+      <div class="home-return-box">
+        <button class="return-capsule-btn" onclick="returnToParent()">
+          <i class="fas fa-arrow-left"></i> অ্যাপে ফিরুন
         </button>
-        <div class="header-title-balance">
-          <p>ক্রেডিট: <span id="top-balance">0.00</span> টি</p>
+      </div>
+
+      <!-- নতুন সুনির্দিষ্ট ৩ লাইনের প্রোফাইল কার্ড -->
+      <div class="profile-card">
+        <div class="profile-avatar-box" id="avatar-container">
+          <div class="avatar-fallback" id="avatar-fallback">U</div>
+        </div>
+        <div class="profile-details">
+          <!-- ১ম লাইন: নাম -->
+          <h3 id="info-name"><div class="mini-spinner"></div></h3>
+          
+          <!-- ২য় লাইন: ইমেইল -->
+          <div class="email-row">
+            <div class="email-pill" id="info-email"><div class="mini-spinner"></div></div>
+          </div>
+          
+          <!-- ৩য় লাইন: ক্রেডিট এবং ইউআইডি -->
+          <div class="credit-uid-row">
+            <div class="credit-pill" id="info-credit">ক্রেডিট: <div class="mini-spinner" style="margin-left: 6px;"></div></div>
+            <div class="uid-pill" id="info-uid"><div class="mini-spinner"></div></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div id="home" class="content-section active">
-      <!-- বড় ইউজারের প্রোফাইল ফটো ও তথ্য মাঝখানে -->
-      <div class="profile-large-card">
-        <div class="profile-large-pic" id="profile-pic">?</div>
-        <h3 id="user-full-name" style="font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--text);">লোড হচ্ছে...</h3>
-        
-        <div class="user-desc-row">
-          <span>ইউআইডি (UID)</span>
-          <b id="info-uid">লোড হচ্ছে...</b>
-        </div>
-        <div class="user-desc-row">
-          <span>ইমেইল</span>
-          <b id="info-email">লোড হচ্ছে...</b>
-        </div>
+      <div class="hero-banner">
+        <h2>✨ KR Calculator A Credit Room 🎓</h2>
+        <p>🎯 আপনার প্রতিটি ক্রেডিট হলো গাণিতিক সমস্যার ধাপে ধাপে নিখুঁত সমাধান পাওয়ার চাবিকাঠি! 🧠💡</p>
       </div>
 
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon green"><i class="fas fa-wallet"></i></div>
           <span>বর্তমান ক্রেডিট</span>
-          <b id="home-balance">0.00 টি</b>
+          <b id="home-balance"><div class="mini-spinner"></div></b>
         </div>
         <div class="stat-card">
           <div class="stat-icon blue"><i class="fas fa-exchange-alt"></i></div>
           <span>মোট লেনদেন</span>
-          <b id="home-ref">0 টি</b>
+          <b id="home-ref"><div class="mini-spinner"></div></b>
         </div>
         <div class="stat-card">
           <div class="stat-icon orange"><i class="fas fa-eye"></i></div>
           <span>বিজ্ঞাপন (৭ দিন)</span>
-          <b id="home-views">0 টি</b>
+          <b id="home-views"><div class="mini-spinner"></div></b>
         </div>
         <div class="stat-card">
           <div class="stat-icon purple"><i class="fas fa-gift"></i></div>
           <span>বোনাস ক্রেডিট</span>
-          <b id="home-bonus">0.00 টি</b>
+          <b id="home-bonus"><div class="mini-spinner"></div></b>
         </div>
       </div>
 
@@ -555,6 +687,25 @@
         <button class="watch-btn-normal" onclick="showAdAndEarn()">
           বিজ্ঞাপন দেখুন (+৩ ক্রেডিট)
         </button>
+      </div>
+
+      <div class="rules-card">
+        <h3><i class="fas fa-scroll"></i> বোনাস নিয়মাবলী</h3>
+        <div class="rule-item">
+          <div class="rule-header-tag">এককালীন অফার</div>
+          <strong>১. প্রথম লগইন বোনাস</strong>
+          প্রথমবার সঠিক ইমেইল ও আইডি দিয়ে সাইন-ইন করলে এককালীন <span class="rule-reward">৫ ক্রেডিট</span> ফ্রি দেওয়া হবে।
+        </div>
+        <div class="rule-item">
+          <div class="rule-header-tag">পরবর্তী অফার</div>
+          <strong>২. লেনদেন বোনাস</strong>
+          মোট লেনদেনের পরিমাণ <span class="rule-reward">১০০০+</span> হলে এককালীন <span class="rule-reward">৫০ ক্রেডিট</span> বোনাস পাবেন।
+        </div>
+        <div class="rule-item">
+          <div class="rule-header-tag">পরবর্তী অফার</div>
+          <strong>৩. বিজ্ঞাপন মাইলস্টোন</strong>
+          মোট বিজ্ঞাপন দেখা <span class="rule-reward">৫৫</span> হলে এককালীন <span class="rule-reward">৬০ ক্রেডিট</span> বোনাস পাবেন।
+        </div>
       </div>
     </div>
 
@@ -616,14 +767,14 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getDatabase, ref as rtdbRef, set as rtdbSet } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref as rtdbRef, get as rtdbGet, set as rtdbSet } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDUrso1G3orSxiZGTQ1vNYnmN0jdnJ3nSM",
       authDomain: "kr-calculator-a-bc1e2.firebaseapp.com",
       databaseURL: "https://kr-calculator-a-bc1e2-default-rtdb.firebaseio.com",
       projectId: "kr-calculator-a-bc1e2",
-      storageBucket: "kr-calculator-a-bc1e2.appspot.com",
+      storageBucket: "kr-calculator-a-bc1e2.firebasestorage.app",
       messagingSenderId: "916522220428",
       appId: "1:916522220428:web:b39f14d38c9fe45ecaf4a9",
       measurementId: "G-K4XGHWM4QF"
@@ -632,7 +783,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     let rtdb = null;
-    try { rtdb = getDatabase(app); } catch (e) { console.warn('RTDB init', e); }
+    try { rtdb = getDatabase(app); } catch (e) {}
 
     const ROOT_COLLECTION = "KR pro math master";
     const RTDB_CREDIT_ROOT = "Credit";
@@ -675,25 +826,14 @@
       defaultName = linkName || "ইউজার";
       sourceAvatar = linkAvatar || "";
       defaultEmail = linkEmail || "";
-    } else {
-      let visitorId = localStorage.getItem("kr_visitor_id");
-      if (!visitorId) {
-        visitorId = "KR-" + Math.floor(10000000 + Math.random() * 90000000);
-        localStorage.setItem("kr_visitor_id", visitorId);
-      }
-      userId = visitorId;
     }
 
-    // নির্দিষ্ট ৩টি সাব-ডকুমেন্ট পাথ
-    const userDocRef = doc(db, ROOT_COLLECTION, userId);
-    const creditProfileRef = doc(db, ROOT_COLLECTION, userId, "credit", "profile");
-    const creditMainRef = doc(db, ROOT_COLLECTION, userId, "credit", "main_credit");
-    const creditFriendRef = doc(db, ROOT_COLLECTION, userId, "credit", "friend_gift");
-    const creditSelfRef = doc(db, ROOT_COLLECTION, userId, "credit", "self_gift");
+    const userDocRef = userId ? doc(db, ROOT_COLLECTION, userId) : null;
+    const creditProfileRef = userId ? doc(db, ROOT_COLLECTION, userId, "credit", "profile") : null;
+    const creditMainRef = userId ? doc(db, ROOT_COLLECTION, userId, "credit", "main_credit") : null;
+    const creditFriendRef = userId ? doc(db, ROOT_COLLECTION, userId, "credit", "friend_gift") : null;
+    const creditSelfRef = userId ? doc(db, ROOT_COLLECTION, userId, "credit", "self_gift") : null;
 
-    let currentUserData = null;
-    let currentTransferMode = "self";
-    let postActionCallback = null;
     let isTransferring = false;
     let holdTimer = null;
     let holdStartTime = 0;
@@ -713,16 +853,25 @@
       setTimeout(() => { element.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 350);
     };
 
-    window.showGatewayModal = function(type, title, desc, callback = null) {
+    window.showGatewayModal = function(type, title, desc, dialCode = null, callback = null) {
       const modal = document.getElementById("gateway-modal");
       const iconWrap = document.getElementById("gateway-icon-wrap");
       const icon = document.getElementById("gateway-icon");
       const titleEl = document.getElementById("gateway-title");
       const descEl = document.getElementById("gateway-desc");
+      const dialBox = document.getElementById("dial-copy-box");
+      const dialVal = document.getElementById("dial-code-val");
 
       titleEl.innerText = title;
       descEl.innerText = desc;
-      postActionCallback = callback;
+      window.postActionCallback = callback;
+
+      if (dialCode) {
+        dialVal.innerText = dialCode;
+        dialBox.style.display = "flex";
+      } else {
+        dialBox.style.display = "none";
+      }
 
       iconWrap.className = "gateway-icon-wrap " + type;
       icon.className = type === "success" ? "fas fa-check-circle" : (type === "error" ? "fas fa-exclamation-circle" : "fas fa-info-circle");
@@ -731,13 +880,23 @@
 
     window.closeGatewayModal = function() {
       document.getElementById("gateway-modal").classList.remove("open");
-      if (typeof postActionCallback === 'function') {
-        let cb = postActionCallback;
-        postActionCallback = null;
+      if (typeof window.postActionCallback === 'function') {
+        let cb = window.postActionCallback;
+        window.postActionCallback = null;
         cb();
       }
     };
 
+    window.copyDialCode = function() {
+      const code = document.getElementById("dial-code-val").innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.innerHTML = `<i class="fas fa-check"></i> কপিড!`;
+        setTimeout(() => { btn.innerHTML = `<i class="fas fa-copy"></i> কপি`; }, 1500);
+      });
+    };
+
+    let currentTransferMode = "self";
     window.setTransferMode = function(mode) {
       currentTransferMode = mode;
       const btnSelf = document.getElementById("btn-self");
@@ -821,6 +980,11 @@
     };
 
     window.openFullscreenConfirm = async function() {
+      if (!userId || !defaultEmail) {
+        showGatewayModal("error", "ত্রুটি", "ইউজার আইডি বা ইমেইল সঠিক নয়।");
+        return;
+      }
+
       if (isTransferring) return;
       const amountVal = Number(document.getElementById("transfer-amount").value.trim());
       const targetUid = currentTransferMode === "self" ? userId : document.getElementById("other-uid-input").value.trim();
@@ -829,7 +993,7 @@
       const totalBalance = Number(appCreditVal) || 0;
 
       if (amountVal > totalBalance) {
-        showGatewayModal("error", "অপর্যাপ্ত ব্যালেন্স", "দুঃখিত, আপনার মূল ক্রেডিট পর্যাপ্ত নয়!\nবর্তমান মূল ক্রেডিট: " + totalBalance.toFixed(2) + " টি");
+        showGatewayModal("error", "অপর্যাপ্ত ব্যালেন্স", "দুঃখিত, আপনার মূল ক্রেডিট পর্যাপ্ত নয়!\nবর্তমান মূল ক্রেডিট: " + totalBalance.toFixed(2));
         return;
       }
 
@@ -903,11 +1067,10 @@
 
       let currentPercent = 0;
       const smoothInterval = setInterval(() => {
-        currentPercent += 2;
-        if (currentPercent > 100) currentPercent = 100;
+        currentPercent += 4;
+        if (currentPercent > 95) currentPercent = 95;
         setLoadingProgress(currentPercent);
-        if (currentPercent === 100) clearInterval(smoothInterval);
-      }, 20);
+      }, 40);
 
       let result = { ok: false, title: "ট্রান্সফার ব্যর্থ", msg: "দুঃখিত, ট্রানজেকশন সম্পন্ন হয়নি!" };
       try {
@@ -916,7 +1079,9 @@
         result = { ok: false, title: "ট্রান্সফার ব্যর্থ", msg: e?.message || "অজানা ত্রুটি!" };
       }
 
-      await new Promise(r => setTimeout(r, 400));
+      clearInterval(smoothInterval);
+      setLoadingProgress(100);
+      await new Promise(r => setTimeout(r, 300));
       showTransferLoading(false);
 
       document.getElementById("transfer-amount").value = "";
@@ -926,7 +1091,7 @@
       validateTransferForm();
 
       if (result.ok) {
-        showGatewayModal("success", result.title, result.msg);
+        showGatewayModal("success", result.title, result.msg, result.dial);
       } else {
         showGatewayModal("error", result.title, result.msg);
       }
@@ -961,7 +1126,7 @@
         const targetDocRef = doc(db, ROOT_COLLECTION, targetUid);
         const tSnap = await getDoc(targetDocRef);
         if (!tSnap.exists()) {
-          return { ok: false, title: "অ্যাকাউন্ট পাওয়া যায়নি", msg: `ইউআইডি ${targetUid} দিয়ে সিস্টেমে কোনো অ্যাকাউন্ট নেই।` };
+          return { ok: false, title: "অ্যাকাউন্ট পাওয়া যায়নি", msg: `ইউআইডি ${targetUid} সিস্টেমে পাওয়া যায়নি।` };
         }
       }
 
@@ -1017,12 +1182,14 @@
       await updateUIFull();
       return {
         ok: true,
-        title: "ট্রান্সফার সফল",
-        msg: `${amountVal} ক্রেডিট সফলভাবে পাঠানো হয়েছে।\nডায়াল কোড: ${dial}`
+        title: "ট্রান্সফার সফল!",
+        msg: `🎉 সফলভাবে ${amountVal} ক্রেডিট পাঠানো হয়েছে।`,
+        dial: dial
       };
     }
 
     async function fetchAppCredit() {
+      if (!creditMainRef) return;
       try {
         const snap = await getDoc(creditMainRef);
         if (snap.exists()) {
@@ -1044,7 +1211,7 @@
 
     async function addToAppCredit(amount) {
       const add = Number(amount) || 0;
-      if (add <= 0) return;
+      if (add <= 0 || !creditMainRef) return;
       await fetchAppCredit();
       const next = Number((Number(appCreditVal) + add).toFixed(2));
       await setDoc(creditMainRef, { user_credit: next, updatedAt: Date.now() }, { merge: true });
@@ -1055,48 +1222,56 @@
 
     function paintCreditDOM() {
       const c = Number(appCreditVal) || 0;
-      document.getElementById("top-balance").innerText = c.toFixed(2);
-      document.getElementById("home-balance").innerText = c.toFixed(2) + " টি";
+      document.getElementById("info-credit").innerText = "ক্রেডিট: " + c.toFixed(2);
+      document.getElementById("home-balance").innerText = c.toFixed(2);
     }
 
     async function updateUIFull() {
       await fetchAppCredit();
       paintCreditDOM();
 
-      try {
-        let currentName = defaultName;
-        let currentAvatar = sourceAvatar;
-        let currentEmail = defaultEmail;
+      if (!creditProfileRef) return;
 
+      try {
         const pSnap = await getDoc(creditProfileRef);
+        let currentName = defaultName || "ইউজার";
+        let currentEmail = defaultEmail || "ইমেইল পাওয়া যায়নি";
+        
         if (pSnap.exists()) {
           const pData = pSnap.data();
-          if (pData.name) currentName = pData.name;
-          if (pData.avatar) currentAvatar = pData.avatar;
-          if (pData.email) currentEmail = pData.email;
+          currentName = pData.name || currentName;
+          currentEmail = pData.email || currentEmail;
+          if (pData.avatar) sourceAvatar = pData.avatar;
         }
 
-        document.getElementById("user-full-name").innerText = currentName;
-        document.getElementById("info-uid").innerText = userId;
-        document.getElementById("info-email").innerText = currentEmail || "সংরক্ষিত নেই";
+        document.getElementById("info-name").innerText = currentName;
+        document.getElementById("info-email").innerText = currentEmail;
+        document.getElementById("info-uid").innerText = userId || "KR-XXXXXXXX";
 
-        const picEl = document.getElementById("profile-pic");
-        if (currentAvatar && (currentAvatar.startsWith("http://") || currentAvatar.startsWith("https://") || currentAvatar.startsWith("data:image"))) {
-          picEl.innerHTML = `<img src="${currentAvatar}" alt="Avatar" onerror="this.onerror=null; this.parentElement.innerText='${currentName ? currentName.charAt(0).toUpperCase() : 'U'}';">`;
+        const avatarHolder = document.getElementById("avatar-container");
+        if (sourceAvatar && (sourceAvatar.startsWith("http://") || sourceAvatar.startsWith("https://") || sourceAvatar.startsWith("data:image"))) {
+          avatarHolder.innerHTML = `<img src="${sourceAvatar}" alt="Avatar" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'avatar-fallback\\'>${currentName.charAt(0).toUpperCase()}</div>';">`;
         } else {
-          picEl.innerText = currentName ? currentName.charAt(0).toUpperCase() : "U";
+          avatarHolder.innerHTML = `<div class="avatar-fallback">${currentName.charAt(0).toUpperCase()}</div>`;
         }
 
         const uSnap = await getDoc(userDocRef);
         if (uSnap.exists()) {
           const data = uSnap.data();
-          document.getElementById("home-views").innerText = (Array.isArray(data.ads) ? data.ads.length : 0) + " টি";
-          document.getElementById("home-bonus").innerText = (Number(data.bonusTotal) || 0).toFixed(2) + " টি";
+          document.getElementById("home-views").innerText = (Array.isArray(data.ads) ? data.ads.length : 0);
+          document.getElementById("home-bonus").innerText = (Number(data.bonusTotal) || 0).toFixed(2);
+        } else {
+          document.getElementById("home-views").innerText = "0";
+          document.getElementById("home-bonus").innerText = "0.00";
         }
       } catch(e){}
     }
 
     window.openHistoryModal = async function() {
+      if (!creditSelfRef || !creditFriendRef) return;
+
+      showGatewayModal("info", "হিস্টরি বিবরণী", "হিস্টরি লোড হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...");
+
       try {
         const [selfSnap, friendSnap] = await Promise.all([
           getDoc(creditSelfRef),
@@ -1108,7 +1283,7 @@
 
         let msg = "=== লেনদেন হিস্টরি ===\n\n[ নিজের ট্রান্সফার ]\n";
         const selfKeys = Object.keys(selfData);
-        if (selfKeys.length === 0) msg += "কোনো রেকর্ড নেই।\n";
+        if (selfKeys.length === 0) msg += "কোনো রেকর্ড নেই。\n";
         selfKeys.forEach((k, idx) => {
           let item = selfData[k];
           msg += `${idx + 1}. পরিমাণ: ${item.পরিমাণ} | ডায়াল: ${item.ডায়াল}\n`;
@@ -1116,7 +1291,7 @@
 
         msg += "\n[ বন্ধুর গিফট ]\n";
         const friendKeys = Object.keys(friendData);
-        if (friendKeys.length === 0) msg += "কোনো রেকর্ড নেই।\n";
+        if (friendKeys.length === 0) msg += "কোনো রেকর্ড নেই。\n";
         friendKeys.forEach((k, idx) => {
           let item = friendData[k];
           msg += `${idx + 1}. প্রাপক/প্রেরক: ${item.প্রাপক || item.প্রেরক} | পরিমাণ: ${item.পরিমাণ} | ডায়াল: ${item.ডায়াল}\n`;
@@ -1184,28 +1359,27 @@
     };
 
     async function initApp() {
+      if (!userId || !defaultEmail) return;
+
       const name = defaultName || "ইউজার";
 
       try {
-        // ১. রুট ডকুমেন্টে ডেটা
         await setDoc(userDocRef, {
           uid: userId,
           name: name,
-          email: defaultEmail || "",
+          email: defaultEmail,
           avatar: sourceAvatar || "",
           updatedAt: Date.now()
         }, { merge: true });
 
-        // ২. `credit/profile` ডকে প্রোফাইল তথ্য
         await setDoc(creditProfileRef, {
           uid: userId,
           name: name,
-          email: defaultEmail || "",
+          email: defaultEmail,
           avatar: sourceAvatar || "",
           updatedAt: Date.now()
         }, { merge: true });
 
-        // ৩. `credit/main_credit` ডকে মূল ক্রেডিট
         const mainSnap = await getDoc(creditMainRef);
         if (!mainSnap.exists()) {
           await setDoc(creditMainRef, { user_credit: 5, updatedAt: Date.now() }, { merge: true });
