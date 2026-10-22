@@ -697,7 +697,6 @@
     let rtdb = null;
     try { rtdb = getDatabase(app); } catch (e) { console.warn('RTDB init', e); }
 
-    // ফায়ারস্টোর প্রধান কালেকশন ও আরটিডিবি রুট
     const ROOT_COLLECTION = "KR pro math master";
     const RTDB_CREDIT_ROOT = "Credit";
 
@@ -757,10 +756,6 @@
       } catch (e) {}
     }
 
-    /* 
-      নতুন সরাসরি ফাইল স্ট্রাকচার:
-      KR pro math master / {userId} / credit / {credit_files}
-    */
     const userDocRef = doc(db, ROOT_COLLECTION, userId);
     const creditProfileRef = doc(db, ROOT_COLLECTION, userId, "credit", "profile");
     const creditMainRef = doc(db, ROOT_COLLECTION, userId, "credit", "main_credit");
@@ -1051,7 +1046,6 @@
       const dialKey = dial.replace(/[^0-9]/g, "");
       const newSenderMain = Number((senderMain - amountVal).toFixed(2));
 
-      // প্রেরকের মূল ক্রেডিট আপডেট
       await setDoc(creditMainRef, { user_credit: newSenderMain, updatedAt: Date.now() }, { merge: true });
       appCreditVal = newSenderMain;
       await writeRtdbCredit(newSenderMain);
@@ -1068,7 +1062,6 @@
       } else {
         await setDoc(creditFriendRef, { [dialKey]: historyEntry }, { merge: true });
 
-        // প্রাপকের credit সাব-কালেকশনে ডেটা পাঠানো
         const targetMainRef = doc(db, ROOT_COLLECTION, targetUid, "credit", "main_credit");
         const targetFriendRef = doc(db, ROOT_COLLECTION, targetUid, "credit", "friend_gift");
 
@@ -1082,7 +1075,6 @@
         await setDoc(targetMainRef, { user_credit: targetNewBalance, updatedAt: Date.now() }, { merge: true });
         await setDoc(targetFriendRef, { [dialKey]: { "ডায়াল": dial, "প্রেরক": userId, "পরিমাণ": amountVal, "তারিখ": Date.now() } }, { merge: true });
 
-        // রিয়েলটাইম ডেটাবেজে সিঙ্ক রাখা (সঠিক রাখা হয়েছে)
         try {
           if (rtdb) {
             await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + targetUid), {
@@ -1144,11 +1136,25 @@
 
       try {
         const pSnap = await getDoc(creditProfileRef);
+        let currentName = defaultName;
         if (pSnap.exists()) {
           const pData = pSnap.data();
-          document.getElementById("info-name").innerText = pData.name || defaultName;
+          currentName = pData.name || defaultName;
+          document.getElementById("info-name").innerText = currentName;
           document.getElementById("info-uid").innerText = pData.uid || userId;
           document.getElementById("info-email").innerText = pData.email || defaultEmail || "সংরক্ষিত নেই";
+          
+          if (pData.avatar) {
+            sourceAvatar = pData.avatar;
+          }
+        }
+
+        document.getElementById("user-full-name").innerText = currentName;
+        const picEl = document.getElementById("profile-pic");
+        if (sourceAvatar && (sourceAvatar.startsWith("http://") || sourceAvatar.startsWith("https://") || sourceAvatar.startsWith("data:image"))) {
+          picEl.innerHTML = `<img src="${sourceAvatar}" alt="Avatar" onerror="this.onerror=null; this.parentElement.innerHTML='${currentName ? currentName.charAt(0).toUpperCase() : 'U'}';">`;
+        } else {
+          picEl.innerText = currentName ? currentName.charAt(0).toUpperCase() : "U";
         }
 
         const uSnap = await getDoc(userDocRef);
@@ -1172,7 +1178,7 @@
 
         let msg = "=== লেনদেন হিস্টরি ===\n\n[ নিজের ট্রান্সফার ]\n";
         const selfKeys = Object.keys(selfData);
-        if (selfKeys.length === 0) msg += "কোনো রেকর্ড নেই।\n";
+        if (selfKeys.length === 0) msg += "কোনো রেকর্ড নেই。\n";
         selfKeys.forEach((k, idx) => {
           let item = selfData[k];
           msg += `${idx + 1}. পরিমাণ: ${item.পরিমাণ} | ডায়াল: ${item.ডায়াল}\n`;
@@ -1180,7 +1186,7 @@
 
         msg += "\n[ বন্ধুর গিফট ]\n";
         const friendKeys = Object.keys(friendData);
-        if (friendKeys.length === 0) msg += "কোনো রেকর্ড নেই।\n";
+        if (friendKeys.length === 0) msg += "কোনো রেকর্ড নেই。\n";
         friendKeys.forEach((k, idx) => {
           let item = friendData[k];
           msg += `${idx + 1}. প্রাপক/প্রেরক: ${item.প্রাপক || item.প্রেরক} | পরিমাণ: ${item.পরিমাণ} | ডায়াল: ${item.ডায়াল}\n`;
@@ -1247,7 +1253,6 @@
       element.classList.add('active');
     };
 
-    // অ্যাপ ইনিশিয়ালাইজেশন ও প্রোফাইল সেটআপ
     async function initApp() {
       const name = defaultName || "ইউজার";
       document.getElementById("user-full-name").innerText = name;
@@ -1256,14 +1261,13 @@
       document.getElementById("info-email").innerText = defaultEmail || "সংরক্ষিত নেই";
 
       const picEl = document.getElementById("profile-pic");
-      if (sourceAvatar && sourceAvatar.startsWith("http")) {
-        picEl.innerHTML = `<img src="${sourceAvatar}" alt="Avatar">`;
+      if (sourceAvatar && (sourceAvatar.startsWith("http://") || sourceAvatar.startsWith("https://") || sourceAvatar.startsWith("data:image"))) {
+        picEl.innerHTML = `<img src="${sourceAvatar}" alt="Avatar" onerror="this.onerror=null; this.parentElement.innerHTML='${name ? name.charAt(0).toUpperCase() : 'U'}';">`;
       } else {
         picEl.innerText = name ? name.charAt(0).toUpperCase() : "U";
       }
 
       try {
-        // ১. সরাসরি ইউজার ডকুমেন্টের ভেতরে প্রোফাইল ফিল্ড
         await setDoc(userDocRef, {
           uid: userId,
           name: name,
@@ -1272,7 +1276,6 @@
           updatedAt: Date.now()
         }, { merge: true });
 
-        // ২. ইউজার ডকুমেন্টের ভেতরে আলাদা `credit/profile` ডকুমেন্ট
         await setDoc(creditProfileRef, {
           uid: userId,
           name: name,
@@ -1281,7 +1284,6 @@
           updatedAt: Date.now()
         }, { merge: true });
 
-        // ৩. ইউজার ডকুমেন্টের ভেতরে আলাদা `credit/main_credit`
         const mainSnap = await getDoc(creditMainRef);
         if (!mainSnap.exists()) {
           await setDoc(creditMainRef, { user_credit: 5, updatedAt: Date.now() }, { merge: true });
