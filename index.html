@@ -841,7 +841,16 @@
     const linkUid = urlParams.get('uid') || urlParams.get('id') || urlParams.get('user_id');
     const linkName = urlParams.get('name');
     const linkEmail = urlParams.get('email');
-    const linkAvatar = urlParams.get('avatar') || urlParams.get('photo_url');
+    function krDecodeAvatarParam(raw) {
+      if (!raw) return '';
+      var s = String(raw).trim();
+      try { s = decodeURIComponent(s); } catch (e) {}
+      try { if (s.indexOf('%') >= 0) s = decodeURIComponent(s); } catch (e2) {}
+      s = String(s).trim();
+      if (s.indexOf('//') === 0) s = 'https:' + s;
+      return s;
+    }
+    const linkAvatar = krDecodeAvatarParam(urlParams.get('avatar') || urlParams.get('photo_url') || urlParams.get('picture') || '');
 
     let userId = null;
     let defaultName = "";
@@ -850,22 +859,39 @@
     let appCreditVal = 0;
     let uiReady = false;
 
+    function isUsableAvatarUrl(s) {
+      if (!s) return false;
+      s = String(s).trim();
+      if (s.indexOf('//') === 0) s = 'https:' + s;
+      return s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:image') || s.startsWith('blob:');
+    }
+    function pickAvatarFromObj(obj) {
+      if (!obj || typeof obj !== 'object') return '';
+      var keys = ['avatar', 'photoURL', 'photoUrl', 'photo_url', 'picture', 'photo', 'image', 'imageUrl', 'profilePic', 'profile_photo'];
+      for (var i = 0; i < keys.length; i++) {
+        var v = obj[keys[i]];
+        if (v && isUsableAvatarUrl(String(v))) {
+          var out = String(v).trim();
+          if (out.indexOf('//') === 0) out = 'https:' + out;
+          return out;
+        }
+      }
+      return '';
+    }
     function pickAvatarFromStorage() {
       try {
         const key = urlParams.get('avatar_key') || 'kr_pass_avatar';
         const candidates = [
+          linkAvatar,
           localStorage.getItem(key),
           localStorage.getItem('kr_pass_avatar'),
           sessionStorage.getItem(key),
-          sessionStorage.getItem('kr_pass_avatar'),
-          linkAvatar
+          sessionStorage.getItem('kr_pass_avatar')
         ];
         for (const av of candidates) {
           if (!av) continue;
-          const s = String(av).trim();
-          if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:image') || s.startsWith('blob:')) {
-            return s;
-          }
+          var s = krDecodeAvatarParam(av);
+          if (isUsableAvatarUrl(s)) return s.indexOf('//') === 0 ? ('https:' + s) : s;
         }
       } catch (e) {}
       return "";
@@ -1374,9 +1400,15 @@
       const avatarHolder = document.getElementById("avatar-container");
       if (!avatarHolder) return;
       const letter = ((name || "U").charAt(0) || "U").toUpperCase();
-      const av = (sourceAvatar || "").trim();
-      if (av && (av.startsWith("http://") || av.startsWith("https://") || av.startsWith("data:image") || av.startsWith("blob:"))) {
-        avatarHolder.innerHTML = '<img src="' + av.replace(/"/g, "&quot;") + '" alt="Avatar" referrerpolicy="no-referrer" onerror="this.onerror=null;this.parentElement.innerHTML=\'<div class=\\\'avatar-fallback\\\'>' + letter + '</div>\';">';
+      var av = (sourceAvatar || "").trim();
+      if (av.indexOf('//') === 0) av = 'https:' + av;
+      if (av.indexOf('googleusercontent.com') >= 0) {
+        if (/=s\d+/.test(av)) av = av.replace(/=s\d+[^/?&#]*/, '=s128-c');
+        else if (av.indexOf('=s') < 0) av = av.split('?')[0] + '=s128-c';
+      }
+      if (av && isUsableAvatarUrl(av)) {
+        var safe = av.replace(/"/g, '&quot;');
+        avatarHolder.innerHTML = '<img src="' + safe + '" alt="Avatar" referrerpolicy="no-referrer" decoding="async" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;" onerror="this.onerror=null;this.parentElement.innerHTML=\'<div class=avatar-fallback>' + letter + '</div>\';">';
       } else {
         avatarHolder.innerHTML = '<div class="avatar-fallback">' + letter + "</div>";
       }
@@ -1442,13 +1474,23 @@
           const pData = pSnap.data() || {};
           if (pData.name) currentName = pData.name;
           if (pData.email) currentEmail = pData.email;
-          const pav = (pData.avatar && String(pData.avatar).trim()) || "";
-          if (pav && (pav.startsWith("http") || pav.startsWith("data:image"))) {
-            sourceAvatar = pav;
+          var pav = pickAvatarFromObj(pData);
+          if (pav) sourceAvatar = pav;
+        }
+        if (uSnap && !uSnap.__timeout && !uSnap.__error && uSnap.exists && uSnap.exists()) {
+          var uDataAv = pickAvatarFromObj(uSnap.data() || {});
+          if (uDataAv && !sourceAvatar) sourceAvatar = uDataAv;
+          if (!currentName || currentName === 'ইউজার') {
+            var un = (uSnap.data() || {}).name;
+            if (un) currentName = un;
+          }
+          if (!currentEmail) {
+            var ue = (uSnap.data() || {}).email;
+            if (ue) currentEmail = ue;
           }
         }
 
-        // localStorage/URL avatar অগ্রাধিকার (ক্যালকুলেটর থেকে পাস)
+        // URL অগ্রাধিকার (ক্যালকুলেটর → credit room ক্রস-অরিজিন; localStorage শেয়ার হয় না)
         const passed = pickAvatarFromStorage();
         if (passed) sourceAvatar = passed;
 
