@@ -804,7 +804,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getDatabase, ref as rtdbRef, get as rtdbGet, set as rtdbSet } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref as rtdbRef, get as rtdbGet, set as rtdbSet, update as rtdbUpdate } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDUrso1G3orSxiZGTQ1vNYnmN0jdnJ3nSM",
@@ -1220,6 +1220,19 @@
 
       if (isSelf) {
         await setDoc(creditSelfRef, { [dialKey]: historyEntry }, { merge: true });
+        /* ক্যালকুলেটর: credit/{uid}/myCredit/{key} — পুল নয়, আলাদা এন্ট্রি */
+        try {
+          if (rtdb && userId) {
+            await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + userId + '/myCredit/' + dialKey), {
+              amount: amountVal,
+              dial: dial,
+              claimed: false,
+              source: 'self_transfer',
+              at: Date.now(),
+              atText: new Date().toLocaleString()
+            });
+          }
+        } catch (eR) { console.warn('rtdb self myCredit', eR); }
       } else {
         await setDoc(creditFriendRef, { [dialKey]: historyEntry }, { merge: true });
 
@@ -1238,12 +1251,21 @@
 
         try {
           if (rtdb) {
-            await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + targetUid), {
+            await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + targetUid + '/main'), {
               user_credit: targetNewBalance,
               updatedAt: Date.now()
             });
+            await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + targetUid + '/myFriend/' + dialKey), {
+              amount: amountVal,
+              dial: dial,
+              claimed: false,
+              from: userId,
+              fromName: (typeof defaultName !== 'undefined' ? defaultName : '') || '',
+              at: Date.now(),
+              atText: new Date().toLocaleString()
+            });
           }
-        } catch(e){}
+        } catch(e){ console.warn('rtdb friend', e); }
       }
 
       await updateUIFull();
@@ -1275,11 +1297,13 @@
     async function writeRtdbCredit(val) {
       if (!rtdb || !userId) return;
       try {
-        await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + userId), {
+        /* কখনো credit/{uid} পুরো সেট করবে না — myCredit/myFriend মুছে যায়
+           শুধু leaf: credit/{uid}/main */
+        await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + userId + '/main'), {
           user_credit: Number(val) || 0,
           updatedAt: Date.now()
         });
-      } catch (e) {}
+      } catch (e) { console.warn('writeRtdbCredit', e); }
     }
 
     async function addToAppCredit(amount) {
@@ -1921,7 +1945,7 @@
 
         try {
           if (rtdb) {
-            await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + targetUid), {
+            await rtdbSet(rtdbRef(rtdb, RTDB_CREDIT_ROOT + '/' + targetUid + '/main'), {
               user_credit: targetNewBalance,
               updatedAt: Date.now()
             });
